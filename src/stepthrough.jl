@@ -3,8 +3,8 @@
 
 mutable struct StepSimulator <: Simulator
     rng::AbstractRNG
-    initial_state::Nullable{Any}
-    max_steps::Nullable{Any}
+    initial_state::Union{Nothing,Any}
+    max_steps::Union{Nothing,Any}
     spec
 end
 function StepSimulator(spec; rng=Base.GLOBAL_RNG, initial_state=nothing, max_steps=nothing)
@@ -13,7 +13,12 @@ end
 
 function simulate(sim::StepSimulator, mdp::MDP{S}, policy::Policy, init_state::S=get_initial_state(sim, mdp)) where {S}
     symtuple = convert_spec(sim.spec, MDP)
-    return MDPSimIterator(symtuple, mdp, policy, sim.rng, init_state, get(sim.max_steps, typemax(Int64)))
+    if sim.max_steps == nothing
+        max_steps = typemax(Int64)
+    else
+        max_steps = sim.max_steps
+    end
+    return MfDPSimIterator(symtuple, mdp, policy, sim.rng, init_state, max_steps)
 end
 
 function simulate(sim::StepSimulator, pomdp::POMDP, policy::Policy, bu::Updater=updater(policy))

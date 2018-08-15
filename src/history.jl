@@ -24,8 +24,8 @@ struct MDPHistory{S,A} <: AbstractMDPHistory{S,A}
     discount::Float64
 
     # if an exception is captured, it will be stored here
-    exception::Nullable{Exception}
-    backtrace::Nullable{Any}
+    exception::Union{Nothing, Exception}
+    backtrace::Union{Nothing, Any}
 end
 
 """
@@ -50,8 +50,8 @@ struct POMDPHistory{S,A,O,B} <: AbstractPOMDPHistory{S,A,O,B}
     discount::Float64
 
     # if an exception is captured, it will be stored here
-    exception::Nullable{Exception}
-    backtrace::Nullable{Any}
+    exception::Union{Nothing, Exception}
+    backtrace::Union{Nothing, Any}
 end
 
 # accessors: use these to access the members - in case the implementation changes

@@ -2,7 +2,10 @@ module POMDPSimulators
 
 using POMDPs
 using Random
+using ProgressMeter
+using DataFrames
 
+import POMDPs: simulate
 
 export RolloutSimulator
 include("rollout.jl")

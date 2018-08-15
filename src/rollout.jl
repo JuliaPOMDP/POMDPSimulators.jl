@@ -26,7 +26,7 @@ struct RolloutSimulator{RNG<:AbstractRNG} <: Simulator
 end
 
 # These are the only safe constructors to use
-RolloutSimulator(rng::AbstractRNG, d::Int=typemax(Int)) = RolloutSimulator(rng, Nullable{Int}(d), Nullable{Float64}(), Nullable{Any}())
+RolloutSimulator(rng::AbstractRNG, d::Int=typemax(Int)) = RolloutSimulator(rng, d, nothing, nothing)
 function RolloutSimulator(;rng=MersenneTwister(rand(UInt32)),
                            eps=nothing,
                            max_steps=nothing)
@@ -66,13 +66,7 @@ end
 end
 
 function simulate(sim::RolloutSimulator, pomdp::POMDP{S}, policy::Policy, updater::Updater, initial_belief) where {S}
-
-    if !isnull(sim.initial_state)
-        s = convert(S, get(sim.initial_state))::S
-    else
-        s = rand(sim.rng, initial_belief)::S
-    end
-
+    s = rand(sim.rng, initial_belief)::S
     return simulate(sim, pomdp, policy, updater, initial_belief, s)
 end
 
@@ -91,9 +85,18 @@ end
 end
 
 function simulate(sim::RolloutSimulator, pomdp::POMDP, policy::Policy, updater::Updater, initial_belief, s)
-
-    eps = get(sim.eps, 0.0)
-    max_steps = get(sim.max_steps, typemax(Int))
+    
+    if sim.eps == nothing
+        eps = 0.0
+    else
+        eps = sim.eps
+    end
+    
+    if sim.max_steps == nothing
+        max_steps = typemax(Int)
+    else
+        max_steps = sim.max_steps
+    end
 
     disc = 1.0
     r_total = 0.0
@@ -122,9 +125,6 @@ function simulate(sim::RolloutSimulator, pomdp::POMDP, policy::Policy, updater::
 end
 
 @POMDP_require simulate(sim::RolloutSimulator, mdp::MDP, policy::Policy) begin
-    if isnull(sim.initial_state)
-        @req initial_state(::typeof(mdp), ::typeof(sim.rng))
-    end
     istate = initial_state(mdp, sim.rng)
     @subreq simulate(sim, mdp, policy, istate)
 end
@@ -140,14 +140,23 @@ end
 end
 
 function simulate(sim::RolloutSimulator, mdp::MDP, policy::Policy)
-    istate=get(sim.initial_state, initial_state(mdp, sim.rng))
+    istate = initial_state(mdp, sim.rng)
     simulate(sim, mdp, policy, istate)
 end
 
 function simulate(sim::RolloutSimulator, mdp::Union{MDP{S}, POMDP{S}}, policy::Policy, initial_state::S) where {S}
-
-    eps = get(sim.eps, 0.0)
-    max_steps = get(sim.max_steps, typemax(Int))
+    
+    if sim.eps == nothing
+        eps = 0.0
+    else
+        eps = sim.eps
+    end
+    
+    if sim.max_steps == nothing
+        max_steps = typemax(Int)
+    else
+        max_steps = sim.max_steps
+    end
 
     s = initial_state
 
