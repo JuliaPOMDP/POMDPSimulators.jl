@@ -1,0 +1,9 @@
+name = "POMDPSimulators"
+uuid = "a011d688-a0b9-11e8-2c70-290aeeeab7c9"
+authors = ["rejuvyesh <mail@rejuvyesh.com>"]
+version = "0.1.0"
+
+[deps]
+POMDPs = "a93abf59-7444-517b-a68a-c42f96afdd7d"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
