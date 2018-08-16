@@ -1,4 +1,3 @@
-
 using POMDPs
 using POMDPPolicies
 using POMDPModels
@@ -7,6 +6,12 @@ using Random
 using Test
 using POMDPSimulators
 
-include("test_rollout.jl")
-include("test_sim.jl")
-include("test_stepthrough.jl")
+@testset "rollout" begin
+    include("test_rollout.jl")
+end
+@testset "sim" begin
+    include("test_sim.jl")
+end
+@testset "stepthrough" begin
+    include("test_stepthrough.jl")
+end
