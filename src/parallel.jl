@@ -124,7 +124,7 @@ function run_parallel(process::Function, queue::AbstractVector;
 
     np = nprocs()
     if np == 1 && proc_warn
-        warn("""
+        @warn("""
              run_parallel(...) was started with only 1 process, so simulations will be run in serial. 
 
              To supress this warning, use run_parallel(..., proc_warn=false).

@@ -120,7 +120,7 @@ function convert_spec(spec, recognized::Set{Symbol})
     conv = convert_spec(spec)
     for s in (isa(conv, Tuple) ? conv : tuple(conv))
         if !(s in recognized)
-            warn("uncrecognized symbol $s in step iteration specification $spec.")
+            @warn("uncrecognized symbol $s in step iteration specification $spec.")
         end
     end
     return conv
