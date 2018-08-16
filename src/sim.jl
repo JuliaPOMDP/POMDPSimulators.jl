@@ -42,7 +42,7 @@ function sim(polfunc::Function, mdp::MDP,
             )
 
     kwargd = Dict(kwargs)
-    if initialstate==nothing && state_type(mdp) != Nothing
+    if initialstate==nothing && statetype(mdp) != Nothing
         if haskey(kwargd, :initialstate)
             initialstate = pop!(kwargd, :initialstate)
         else
@@ -66,7 +66,7 @@ function sim(polfunc::Function, pomdp::POMDP,
             )
 
     kwargd = Dict(kwargs)
-    if initialstate==nothing && state_type(pomdp) != Void
+    if initialstate==nothing && statetype(pomdp) != Nothing
         if haskey(kwargd, :initialstate)
             initialstate = pop!(kwargd, :initialstate)
         else
@@ -77,7 +77,7 @@ function sim(polfunc::Function, pomdp::POMDP,
     if simulator==nothing
         simulator = HistoryRecorder(;kwargd...)
     end
-    if initial_obs==nothing && obs_type(pomdp) != Void
+    if initial_obs==nothing && obstype(pomdp) != Nothing
         initial_obs = default_init_obs(pomdp, initialstate)
     end
     if updater==nothing
@@ -88,22 +88,22 @@ function sim(polfunc::Function, pomdp::POMDP,
 end
 
 function default_init_obs(p::POMDP, s)
-    if implemented(generate_o, Tuple{typeof(p), typeof(s), typeof(Base.GLOBAL_RNG)})
-        return generate_o(p, s, Base.GLOBAL_RNG)
+    if implemented(generate_o, Tuple{typeof(p), typeof(s), typeof(Random.GLOBAL_RNG)})
+        return generate_o(p, s, Random.GLOBAL_RNG)
     else
         return nothing
     end
 end
 
 @generated function default_init_state(p::Union{MDP,POMDP})
-    if implemented(initialstate, Tuple{p, typeof(Base.GLOBAL_RNG)})
-        return :(initialstate(p, Base.GLOBAL_RNG))
+    if implemented(initialstate, Tuple{p, typeof(Random.GLOBAL_RNG)})
+        return :(initialstate(p, Random.GLOBAL_RNG))
     else
         return quote
             error("""
                   Error in sim(::$(typeof(p))): No initial state specified.
                   
-                  Please supply it as an argument after the mdp or define the method POMDPs.initialstate(::$(typeof(p)), ::$(typeof(Base.GLOBAL_RNG))) or define the method POMDPs.initialstate_distribution(::$(typeof(p))).
+                  Please supply it as an argument after the mdp or define the method POMDPs.initialstate(::$(typeof(p)), ::$(typeof(Random.GLOBAL_RNG))) or define the method POMDPs.initialstate_distribution(::$(typeof(p))).
 
                   """)
         end

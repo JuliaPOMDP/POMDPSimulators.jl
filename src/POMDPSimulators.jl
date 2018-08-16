@@ -6,6 +6,7 @@ using ProgressMeter
 using DataFrames
 using POMDPPolicies
 using POMDPModelTools
+using BeliefUpdaters
 
 import POMDPs: simulate, discount
 

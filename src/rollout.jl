@@ -63,9 +63,9 @@ end
 
 @POMDP_require simulate(sim::RolloutSimulator, pomdp::POMDP, policy::Policy, updater::Updater, initial_belief, s) begin
     P = typeof(pomdp)
-    S = state_type(P)
-    A = action_type(P)
-    O = obs_type(P)
+    S = statetype(P)
+    A = actiontype(P)
+    O = obstype(P)
     @req initialize_belief(::typeof(updater), ::typeof(initial_belief))
     @req isterminal(::P, ::S)
     @req discount(::P)
@@ -123,7 +123,7 @@ end
 @POMDP_require simulate(sim::RolloutSimulator, mdp::MDP, policy::Policy, initialstate) begin
     P = typeof(mdp)
     S = typeof(initialstate)
-    A = action_type(mdp)
+    A = actiontype(mdp)
     @req isterminal(::P, ::S)
     @req action(::typeof(policy), ::S)
     @req generate_sr(::P, ::S, ::A, ::typeof(sim.rng))

@@ -33,13 +33,13 @@ function Sim(pomdp::POMDP,
              up=updater(policy),
              initial_belief=initialstate_distribution(pomdp),
              initialstate=nothing;
-             rng::AbstractRNG=Base.GLOBAL_RNG,
+             rng::AbstractRNG=Random.GLOBAL_RNG,
              max_steps::Int=typemax(Int),
              simulator::Simulator=HistoryRecorder(rng=rng, max_steps=max_steps),
              metadata::Dict{Symbol}=Dict{Symbol, Any}()
             )
 
-    if initialstate == nothing && state_type(pomdp) != Void
+    if initialstate == nothing && statetype(pomdp) != Nothing
         is = rand(rng, initial_belief)
     else
         is = initialstate
@@ -56,7 +56,7 @@ Create a `Sim` object that represents a MDP simulation.
 A vector of `Sim` objects can be executed with `run` or `run_parallel`.
 
 ## Keyword Arguments
-- `rng::AbstractRNG=Base.GLOBAL_RNG`
+- `rng::AbstractRNG=Random.GLOBAL_RNG`
 - `max_steps::Int=typemax(Int)`
 - `simulator::Simulator=HistoryRecorder(rng=rng, max_steps=max_steps)`
 - `metadata::Dict{Symbol}=Dict{Symbol, Any}()` a dictionary of metadata for the sim that will be recorded, e.g. `Dict(:solver_iterations=>500)`.
@@ -64,13 +64,13 @@ A vector of `Sim` objects can be executed with `run` or `run_parallel`.
 function Sim(mdp::MDP,
              policy::Policy,
              initialstate=nothing;
-             rng::AbstractRNG=Base.GLOBAL_RNG,
+             rng::AbstractRNG=Random.GLOBAL_RNG,
              max_steps::Int=typemax(Int),
              simulator::Simulator=HistoryRecorder(rng=rng, max_steps=max_steps),
              metadata::Dict{Symbol}=Dict{Symbol, Any}()
             )
 
-    if initialstate == nothing && state_type(mdp) != Void
+    if initialstate == nothing && statetype(mdp) != Nothing
         is = POMDPs.initialstate(mdp, rng) 
     else
         is = initialstate

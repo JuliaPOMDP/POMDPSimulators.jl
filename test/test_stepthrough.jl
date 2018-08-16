@@ -6,11 +6,11 @@ let
     sim = StepSimulator("s,sp,r,a,ai", rng=MersenneTwister(3), max_steps=100)
     n_steps = 0
     for (s, sp, r, a, ai) in simulate(sim, mdp, policy)
-        @test isa(s, state_type(mdp))
-        @test isa(sp, state_type(mdp))
+        @test isa(s, statetype(mdp))
+        @test isa(sp, statetype(mdp))
         @test isa(r, Float64)
-        @test isa(a, action_type(mdp))
-        @test isa(ai, Void)
+        @test isa(a, actiontype(mdp))
+        @test isa(ai, Nothing)
         n_steps += 1
     end
     @test n_steps <= 100
@@ -23,6 +23,7 @@ let
     @test n_steps <= 100
 end
 
+
 # pomdp step simulator and stepthrough
 let
     mdp = BabyPOMDP()
@@ -31,10 +32,10 @@ let
     sim = StepSimulator("s,sp,r,a,b,ui,i,ai", rng=MersenneTwister(3), max_steps=100)
     n_steps = 0
     for (s, sp, r, a, b, ui, i, ai) in simulate(sim, mdp, policy, up)
-        @test isa(s, state_type(mdp))
-        @test isa(sp, state_type(mdp))
+        @test isa(s, statetype(mdp))
+        @test isa(sp, statetype(mdp))
         @test isa(r, Float64)
-        @test isa(a, action_type(mdp))
+        @test isa(a, actiontype(mdp))
         @test isa(b, Bool)
         @test ui == nothing
         @test ai == nothing

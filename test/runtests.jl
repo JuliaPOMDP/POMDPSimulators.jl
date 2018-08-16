@@ -1,7 +1,7 @@
 using POMDPs
 using POMDPPolicies
 using POMDPModels
-
+using BeliefUpdaters
 using Random
 using Test
 using POMDPSimulators

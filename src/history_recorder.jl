@@ -66,9 +66,9 @@ end
 
 @POMDP_require simulate(sim::HistoryRecorder, pomdp::POMDP, policy::Policy, bu::Updater, dist::Any) begin
     P = typeof(pomdp)
-    S = state_type(pomdp)
-    A = action_type(pomdp)
-    O = obs_type(pomdp)
+    S = statetype(pomdp)
+    A = actiontype(pomdp)
+    O = obstype(pomdp)
     @req initialize_belief(::typeof(bu), ::typeof(dist))
     @req isterminal(::P, ::S)
     @req discount(::P)
@@ -173,8 +173,8 @@ end
 
 @POMDP_require simulate(sim::HistoryRecorder, mdp::MDP, policy::Policy, initialstate::Any) begin
     P = typeof(mdp)
-    S = state_type(mdp)
-    A = action_type(mdp)
+    S = statetype(mdp)
+    A = actiontype(mdp)
     @req isterminal(::P, ::S)
     @req action(::typeof(policy), ::S)
     @req generate_sr(::P, ::S, ::A, ::typeof(sim.rng))

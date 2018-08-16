@@ -7,7 +7,7 @@ mutable struct StepSimulator <: Simulator
     max_steps::Union{Nothing,Any}
     spec
 end
-function StepSimulator(spec; rng=Base.GLOBAL_RNG, initialstate=nothing, max_steps=nothing)
+function StepSimulator(spec; rng=Random.GLOBAL_RNG, initialstate=nothing, max_steps=nothing)
     return StepSimulator(rng, initialstate, max_steps, spec)
 end
 
