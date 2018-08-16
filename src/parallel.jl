@@ -6,7 +6,7 @@ struct POMDPSim <: Sim
     policy::Policy
     updater::Updater
     initial_belief::Any
-    initial_state::Any
+    initialstate::Any
     metadata::Dict{Symbol}
 end
 
@@ -16,7 +16,7 @@ struct MDPSim <: Sim
     simulator::Simulator
     mdp::MDP
     policy::Policy
-    initial_state::Any
+    initialstate::Any
     metadata::Dict{Symbol}
 end
 
@@ -24,32 +24,32 @@ problem(sim::MDPSim) = sim.mdp
 
 """
     Sim(p::POMDP, policy::Policy, metadata=Dict(:note=>"a note"))
-    Sim(p::POMDP, policy::Policy[, updater[, initial_belief[, initial_state]]]; kwargs...)
+    Sim(p::POMDP, policy::Policy[, updater[, initial_belief[, initialstate]]]; kwargs...)
 
 Create a `Sim` object that represents a POMDP simulation.
 """
 function Sim(pomdp::POMDP,
              policy::Policy,
              up=updater(policy),
-             initial_belief=initial_state_distribution(pomdp),
-             initial_state=nothing;
+             initial_belief=initialstate_distribution(pomdp),
+             initialstate=nothing;
              rng::AbstractRNG=Base.GLOBAL_RNG,
              max_steps::Int=typemax(Int),
              simulator::Simulator=HistoryRecorder(rng=rng, max_steps=max_steps),
              metadata::Dict{Symbol}=Dict{Symbol, Any}()
             )
 
-    if initial_state == nothing && state_type(pomdp) != Void
+    if initialstate == nothing && state_type(pomdp) != Void
         is = rand(rng, initial_belief)
     else
-        is = initial_state
+        is = initialstate
     end
     return POMDPSim(simulator, pomdp, policy, up, initial_belief, is, metadata)
 end
 
 """
     Sim(p::MDP, policy::Policy, metadata=Dict(:note=>"a note"))
-    Sim(p::MDP, policy::Policy[, initial_state]; kwargs...)
+    Sim(p::MDP, policy::Policy[, initialstate]; kwargs...)
 
 Create a `Sim` object that represents a MDP simulation.
 
@@ -63,23 +63,23 @@ A vector of `Sim` objects can be executed with `run` or `run_parallel`.
 """
 function Sim(mdp::MDP,
              policy::Policy,
-             initial_state=nothing;
+             initialstate=nothing;
              rng::AbstractRNG=Base.GLOBAL_RNG,
              max_steps::Int=typemax(Int),
              simulator::Simulator=HistoryRecorder(rng=rng, max_steps=max_steps),
              metadata::Dict{Symbol}=Dict{Symbol, Any}()
             )
 
-    if initial_state == nothing && state_type(mdp) != Void
-        is = POMDPs.initial_state(mdp, rng) 
+    if initialstate == nothing && state_type(mdp) != Void
+        is = POMDPs.initialstate(mdp, rng) 
     else
-        is = initial_state
+        is = initialstate
     end
     return MDPSim(simulator, mdp, policy, is, metadata)
 end
 
-POMDPs.simulate(s::POMDPSim) = simulate(s.simulator, s.pomdp, s.policy, s.updater, s.initial_belief, s.initial_state)
-POMDPs.simulate(s::MDPSim) = simulate(s.simulator, s.mdp, s.policy, s.initial_state)
+POMDPs.simulate(s::POMDPSim) = simulate(s.simulator, s.pomdp, s.policy, s.updater, s.initial_belief, s.initialstate)
+POMDPs.simulate(s::MDPSim) = simulate(s.simulator, s.mdp, s.policy, s.initialstate)
 
 default_process(s::Sim, r::Float64) = :reward=>r
 default_process(s::Sim, hist::SimHistory) = default_process(s, discounted_reward(hist))

@@ -40,13 +40,13 @@ end
 end
 
 @POMDP_require simulate(sim::RolloutSimulator, pomdp::POMDP, policy::Policy, bu::Updater) begin
-    @req initial_state_distribution(::typeof(pomdp))
-    dist = initial_state_distribution(pomdp)
+    @req initialstate_distribution(::typeof(pomdp))
+    dist = initialstate_distribution(pomdp)
     @subreq simulate(sim, pomdp, policy, bu, dist)
 end
 
 function simulate(sim::RolloutSimulator, pomdp::POMDP, policy::Policy, bu::Updater=updater(policy))
-    dist = initial_state_distribution(pomdp)
+    dist = initialstate_distribution(pomdp)
     return simulate(sim, pomdp, policy, bu, dist)
 end
 
@@ -116,13 +116,13 @@ function simulate(sim::RolloutSimulator, pomdp::POMDP, policy::Policy, updater::
 end
 
 @POMDP_require simulate(sim::RolloutSimulator, mdp::MDP, policy::Policy) begin
-    istate = initial_state(mdp, sim.rng)
+    istate = initialstate(mdp, sim.rng)
     @subreq simulate(sim, mdp, policy, istate)
 end
 
-@POMDP_require simulate(sim::RolloutSimulator, mdp::MDP, policy::Policy, initial_state) begin
+@POMDP_require simulate(sim::RolloutSimulator, mdp::MDP, policy::Policy, initialstate) begin
     P = typeof(mdp)
-    S = typeof(initial_state)
+    S = typeof(initialstate)
     A = action_type(mdp)
     @req isterminal(::P, ::S)
     @req action(::typeof(policy), ::S)
@@ -131,11 +131,11 @@ end
 end
 
 function simulate(sim::RolloutSimulator, mdp::MDP, policy::Policy)
-    istate = initial_state(mdp, sim.rng)
+    istate = initialstate(mdp, sim.rng)
     simulate(sim, mdp, policy, istate)
 end
 
-function simulate(sim::RolloutSimulator, mdp::Union{MDP{S}, POMDP{S}}, policy::Policy, initial_state::S) where {S}
+function simulate(sim::RolloutSimulator, mdp::Union{MDP{S}, POMDP{S}}, policy::Policy, initialstate::S) where {S}
     
     if sim.eps == nothing
         eps = 0.0
@@ -149,7 +149,7 @@ function simulate(sim::RolloutSimulator, mdp::Union{MDP{S}, POMDP{S}}, policy::P
         max_steps = sim.max_steps
     end
 
-    s = initial_state
+    s = initialstate
 
     disc = 1.0
     r_total = 0.0

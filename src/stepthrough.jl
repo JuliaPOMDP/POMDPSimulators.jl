@@ -3,15 +3,15 @@
 
 mutable struct StepSimulator <: Simulator
     rng::AbstractRNG
-    initial_state::Union{Nothing,Any}
+    initialstate::Union{Nothing,Any}
     max_steps::Union{Nothing,Any}
     spec
 end
-function StepSimulator(spec; rng=Base.GLOBAL_RNG, initial_state=nothing, max_steps=nothing)
-    return StepSimulator(rng, initial_state, max_steps, spec)
+function StepSimulator(spec; rng=Base.GLOBAL_RNG, initialstate=nothing, max_steps=nothing)
+    return StepSimulator(rng, initialstate, max_steps, spec)
 end
 
-function simulate(sim::StepSimulator, mdp::MDP{S}, policy::Policy, init_state::S=get_initial_state(sim, mdp)) where {S}
+function simulate(sim::StepSimulator, mdp::MDP{S}, policy::Policy, init_state::S=get_initialstate(sim, mdp)) where {S}
     symtuple = convert_spec(sim.spec, MDP)
     if sim.max_steps == nothing
         max_steps = typemax(Int64)
@@ -22,15 +22,15 @@ function simulate(sim::StepSimulator, mdp::MDP{S}, policy::Policy, init_state::S
 end
 
 function simulate(sim::StepSimulator, pomdp::POMDP, policy::Policy, bu::Updater=updater(policy))
-    dist = initial_state_distribution(pomdp)    
+    dist = initialstate_distribution(pomdp)    
     return simulate(sim, pomdp, policy, bu, dist)
 end
 
 function simulate(sim::StepSimulator, pomdp::POMDP, policy::Policy, bu::Updater, dist::Any)
-    initial_state = get_initial_state(sim, dist)
+    initialstate = get_initialstate(sim, dist)
     initial_belief = initialize_belief(bu, dist)
     symtuple = convert_spec(sim.spec, POMDP)
-    return POMDPSimIterator(symtuple, pomdp, policy, bu, sim.rng, initial_belief, initial_state, get(sim.max_steps, typemax(Int64)))
+    return POMDPSimIterator(symtuple, pomdp, policy, bu, sim.rng, initial_belief, initialstate, get(sim.max_steps, typemax(Int64)))
 end
 
 struct MDPSimIterator{SPEC, M<:MDP, P<:Policy, RNG<:AbstractRNG, S}
@@ -44,6 +44,7 @@ end
 function MDPSimIterator(spec::Union{Tuple, Symbol}, mdp::MDP, policy::Policy, rng::AbstractRNG, init_state, max_steps::Int) 
     return MDPSimIterator{spec, typeof(mdp), typeof(policy), typeof(rng), typeof(init_state)}(mdp, policy, rng, init_state, max_steps)
 end
+
 
 Base.done(it::MDPSimIterator, is::Tuple{Int, S}) where {S} = isterminal(it.mdp, is[2]) || is[1] > it.max_steps
 Base.start(it::MDPSimIterator) = (1, it.init_state)
@@ -148,7 +149,7 @@ convert_spec(spec::Symbol) = spec
 
 """
     stepthrough(problem, policy, [spec])
-    stepthrough(problem, policy, [spec], [rng=rng], [max_steps=max_steps], [initial_state=initial_state])
+    stepthrough(problem, policy, [spec], [rng=rng], [max_steps=max_steps], [initialstate=initialstate])
 
 Create a simulation iterator. This is intended to be used with for loop syntax to output the results of each step *as the simulation is being run*. 
 

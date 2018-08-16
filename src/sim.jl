@@ -36,29 +36,29 @@ will limit the simulation to 100 steps
 function sim end
 
 function sim(polfunc::Function, mdp::MDP,
-             initial_state=nothing;
+             initialstate=nothing;
              simulator=nothing,
              kwargs...
             )
 
     kwargd = Dict(kwargs)
-    if initial_state==nothing && state_type(mdp) != Nothing
-        if haskey(kwargd, :initial_state)
-            initial_state = pop!(kwargd, :initial_state)
+    if initialstate==nothing && state_type(mdp) != Nothing
+        if haskey(kwargd, :initialstate)
+            initialstate = pop!(kwargd, :initialstate)
         else
-            initial_state = default_init_state(mdp)
+            initialstate = default_init_state(mdp)
         end    
     end
-    delete!(kwargd, :initial_state)
+    delete!(kwargd, :initialstate)
     if simulator==nothing
         simulator = HistoryRecorder(;kwargd...)
     end
     policy = FunctionPolicy(polfunc)
-    simulate(simulator, mdp, policy, initial_state)
+    simulate(simulator, mdp, policy, initialstate)
 end
 
 function sim(polfunc::Function, pomdp::POMDP,
-             initial_state=nothing;
+             initialstate=nothing;
              simulator=nothing,
              initial_obs=nothing,
              updater=nothing,
@@ -66,25 +66,25 @@ function sim(polfunc::Function, pomdp::POMDP,
             )
 
     kwargd = Dict(kwargs)
-    if initial_state==nothing && state_type(pomdp) != Void
-        if haskey(kwargd, :initial_state)
-            initial_state = pop!(kwargd, :initial_state)
+    if initialstate==nothing && state_type(pomdp) != Void
+        if haskey(kwargd, :initialstate)
+            initialstate = pop!(kwargd, :initialstate)
         else
-            initial_state = default_init_state(pomdp)
+            initialstate = default_init_state(pomdp)
         end    
     end
-    delete!(kwargd, :initial_state)
+    delete!(kwargd, :initialstate)
     if simulator==nothing
         simulator = HistoryRecorder(;kwargd...)
     end
     if initial_obs==nothing && obs_type(pomdp) != Void
-        initial_obs = default_init_obs(pomdp, initial_state)
+        initial_obs = default_init_obs(pomdp, initialstate)
     end
     if updater==nothing
         updater = PrimedPreviousObservationUpdater{Any}(initial_obs)
     end
     policy = FunctionPolicy(polfunc)
-    simulate(simulator, pomdp, policy, updater, initial_obs, initial_state)
+    simulate(simulator, pomdp, policy, updater, initial_obs, initialstate)
 end
 
 function default_init_obs(p::POMDP, s)
@@ -96,14 +96,14 @@ function default_init_obs(p::POMDP, s)
 end
 
 @generated function default_init_state(p::Union{MDP,POMDP})
-    if implemented(initial_state, Tuple{p, typeof(Base.GLOBAL_RNG)})
-        return :(initial_state(p, Base.GLOBAL_RNG))
+    if implemented(initialstate, Tuple{p, typeof(Base.GLOBAL_RNG)})
+        return :(initialstate(p, Base.GLOBAL_RNG))
     else
         return quote
             error("""
                   Error in sim(::$(typeof(p))): No initial state specified.
                   
-                  Please supply it as an argument after the mdp or define the method POMDPs.initial_state(::$(typeof(p)), ::$(typeof(Base.GLOBAL_RNG))) or define the method POMDPs.initial_state_distribution(::$(typeof(p))).
+                  Please supply it as an argument after the mdp or define the method POMDPs.initialstate(::$(typeof(p)), ::$(typeof(Base.GLOBAL_RNG))) or define the method POMDPs.initialstate_distribution(::$(typeof(p))).
 
                   """)
         end

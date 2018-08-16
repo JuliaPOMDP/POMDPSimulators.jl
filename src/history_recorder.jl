@@ -41,8 +41,8 @@ function HistoryRecorder(;rng=MersenneTwister(rand(UInt32)),
                           sizehint=nothing,
                           capture_exception=false,
                           show_progress=false)
-    # if !isnull(initial_state)
-    #     warn("The initial_state argument for HistoryRecorder is deprecated. The initial state should be specified as the last argument to simulate(...).")
+    # if !isnull(initialstate)
+    #     warn("The initialstate argument for HistoryRecorder is deprecated. The initial state should be specified as the last argument to simulate(...).")
     # end
     return HistoryRecorder(rng, capture_exception, show_progress, max_steps, eps, sizehint)
 end
@@ -54,13 +54,13 @@ end
 end
 
 @POMDP_require simulate(sim::HistoryRecorder, pomdp::POMDP, policy::Policy, bu::Updater) begin
-    @req initial_state_distribution(::typeof(pomdp))
-    dist = initial_state_distribution(pomdp)
+    @req initialstate_distribution(::typeof(pomdp))
+    dist = initialstate_distribution(pomdp)
     @subreq simulate(sim, pomdp, policy, bu, dist)
 end
 
 function simulate(sim::HistoryRecorder, pomdp::POMDP, policy::Policy, bu::Updater=updater(policy))
-    dist = initial_state_distribution(pomdp)
+    dist = initialstate_distribution(pomdp)
     return simulate(sim, pomdp, policy, bu, dist)
 end
 
@@ -83,11 +83,11 @@ function simulate(sim::HistoryRecorder,
                            pomdp::POMDP{S,A,O}, 
                            policy::Policy,
                            bu::Updater,
-                           initial_state_dist::Any,
-                           initial_state::Any=get_initial_state(sim, initial_state_dist)
+                           initialstate_dist::Any,
+                           initialstate::Any=get_initialstate(sim, initialstate_dist)
                   ) where {S,A,O}
 
-    initial_belief = initialize_belief(bu, initial_state_dist)
+    initial_belief = initialize_belief(bu, initialstate_dist)
     if sim.max_steps == nothing
         max_steps = typemax(Int)
     else
@@ -103,18 +103,18 @@ function simulate(sim::HistoryRecorder,
     end
 
     # aliases for the histories to make the code more concise
-    sh = sizehint!(Vector{S}(0), sizehint)
-    ah = sizehint!(Vector{A}(0), sizehint)
-    oh = sizehint!(Vector{O}(0), sizehint)
-    bh = sizehint!(Vector{typeof(initial_belief)}(0), sizehint)
-    rh = sizehint!(Vector{Float64}(0), sizehint)
-    ih = sizehint!(Vector{Any}(0), sizehint)
-    aih = sizehint!(Vector{Any}(0), sizehint)
-    uih = sizehint!(Vector{Any}(0), sizehint)
+    sh = sizehint!(Vector{S}(undef, 0), sizehint)
+    ah = sizehint!(Vector{A}(undef, 0), sizehint)
+    oh = sizehint!(Vector{O}(undef, 0), sizehint)
+    bh = sizehint!(Vector{typeof(initial_belief)}(undef, 0), sizehint)
+    rh = sizehint!(Vector{Float64}(undef, 0), sizehint)
+    ih = sizehint!(Vector{Any}(undef, 0), sizehint)
+    aih = sizehint!(Vector{Any}(undef, 0), sizehint)
+    uih = sizehint!(Vector{Any}(undef, 0), sizehint)
     exception = nothing
     backtrace = nothing
 
-    push!(sh, initial_state)
+    push!(sh, initialstate)
     push!(bh, initial_belief)
 
     if sim.show_progress
@@ -167,11 +167,11 @@ function simulate(sim::HistoryRecorder,
 end
 
 @POMDP_require simulate(sim::HistoryRecorder, mdp::MDP, policy::Policy) begin
-    init_state = initial_state(mdp, sim.rng)
+    init_state = initialstate(mdp, sim.rng)
     @subreq simulate(sim, mdp, policy, init_state)
 end
 
-@POMDP_require simulate(sim::HistoryRecorder, mdp::MDP, policy::Policy, initial_state::Any) begin
+@POMDP_require simulate(sim::HistoryRecorder, mdp::MDP, policy::Policy, initialstate::Any) begin
     P = typeof(mdp)
     S = state_type(mdp)
     A = action_type(mdp)
@@ -183,7 +183,7 @@ end
 
 function simulate(sim::HistoryRecorder,
                   mdp::MDP{S,A}, policy::Policy,
-                  init_state::S=get_initial_state(sim, mdp)) where {S,A}
+                  init_state::S=get_initialstate(sim, mdp)) where {S,A}
     
     if sim.max_steps == nothing
         max_steps = typemax(Int)
@@ -200,11 +200,11 @@ function simulate(sim::HistoryRecorder,
     end
 
     # aliases for the histories to make the code more concise
-    sh = sizehint!(Vector{S}(0), sizehint)
-    ah = sizehint!(Vector{A}(0), sizehint)
-    rh = sizehint!(Vector{Float64}(0), sizehint)
-    ih = sizehint!(Vector{Any}(0), sizehint)
-    aih = sizehint!(Vector{Any}(0), sizehint)
+    sh = sizehint!(Vector{S}(undef, 0), sizehint)
+    ah = sizehint!(Vector{A}(undef, 0), sizehint)
+    rh = sizehint!(Vector{Float64}(undef, 0), sizehint)
+    ih = sizehint!(Vector{Any}(undef, 0), sizehint)
+    aih = sizehint!(Vector{Any}(undef, 0), sizehint)
     exception = nothing
     backtrace = nothing
 
@@ -252,10 +252,10 @@ function simulate(sim::HistoryRecorder,
     return MDPHistory(sh, ah, rh, ih, aih, discount(mdp), exception, backtrace)
 end
 
-function get_initial_state(sim::Simulator, initial_state_dist)
-    return rand(sim.rng, initial_state_dist)
+function get_initialstate(sim::Simulator, initialstate_dist)
+    return rand(sim.rng, initialstate_dist)
 end
 
-function get_initial_state(sim::Simulator, mdp::Union{MDP,POMDP})
-    return initial_state(mdp, sim.rng)
+function get_initialstate(sim::Simulator, mdp::Union{MDP,POMDP})
+    return initialstate(mdp, sim.rng)
 end
