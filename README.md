@@ -112,8 +112,9 @@ end
 The `run_parallel` function can be used to conveniently run simulations in parallel. Example:
 
 ```julia
-using POMDPToolbox
 using POMDPModels
+using POMDPPolicies
+using POMDPSimulators
 
 pomdp = BabyPOMDP()
 fwc = FeedWhenCrying()
