@@ -42,7 +42,7 @@ function sim(polfunc::Function, mdp::MDP,
             )
 
     kwargd = Dict(kwargs)
-    if initial_state==nothing && state_type(mdp) != Void
+    if initial_state==nothing && state_type(mdp) != Nothing
         if haskey(kwargd, :initial_state)
             initial_state = pop!(kwargd, :initial_state)
         else

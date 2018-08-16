@@ -68,7 +68,7 @@ uinfo_hist(h::SimHistory) = h.uinfo_hist
 
 exception(h::SimHistory) = h.exception
 Base.backtrace(h::SimHistory) = h.backtrace
-discount(h::SimHistory) = h.discount
+POMDPs.discount(h::SimHistory) = h.discount
 
 undiscounted_reward(h::SimHistory) = sum(reward_hist(h))
 function discounted_reward(h::SimHistory)
@@ -141,7 +141,7 @@ step_tuple(h::SubHistory, i::Int) = step_tuple(h.parent, h.inds[i])
 
 exception(h::SubHistory) = exception(h.parent)
 Base.backtrace(h::SubHistory) = backtrace(h.parent)
-discount(h::SubHistory) = discount(h.parent)
+POMDPs.discount(h::SubHistory) = discount(h.parent)
 
 
 # iterators

@@ -4,8 +4,10 @@ using POMDPs
 using Random
 using ProgressMeter
 using DataFrames
+using POMDPPolicies
+using POMDPModelTools
 
-import POMDPs: simulate
+import POMDPs: simulate, discount
 
 export RolloutSimulator
 include("rollout.jl")

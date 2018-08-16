@@ -25,22 +25,13 @@ struct RolloutSimulator{RNG<:AbstractRNG} <: Simulator
     eps::Union{Nothing,Float64}
 end
 
-# These are the only safe constructors to use
-RolloutSimulator(rng::AbstractRNG, d::Int=typemax(Int)) = RolloutSimulator(rng, d, nothing, nothing)
+RolloutSimulator(rng::AbstractRNG, d::Int=typemax(Int)) = RolloutSimulator(rng, d, nothing)
 function RolloutSimulator(;rng=MersenneTwister(rand(UInt32)),
                            eps=nothing,
                            max_steps=nothing)
-    # if !isnull(initial_state)
-    #     warn("The initial_state argument for RolloutSimulator is deprecated. The initial state should be specified as the last argument to simulate(...).")
-    # end
     return RolloutSimulator{typeof(rng)}(rng, max_steps, eps)
 end
 
-# # COMPATIBILITY CONSTRUCTOR: DO NOT USE!
-# # Once version 0.2.7 is registered, start having this throw a warning in master
-# function RolloutSimulator(rng::AbstractRNG, is::Nullable{Any}, eps::Nullable{Float64}, ms::Nullable{Int})
-#     return RolloutSimulator(rng, ms, eps, is)
-# end
 
 @POMDP_require simulate(sim::RolloutSimulator, pomdp::POMDP, policy::Policy) begin
     @req updater(::typeof(policy))
