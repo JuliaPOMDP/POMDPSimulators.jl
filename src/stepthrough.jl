@@ -26,8 +26,10 @@ function simulate(sim::StepSimulator, pomdp::POMDP, policy::Policy, bu::Updater=
     return simulate(sim, pomdp, policy, bu, dist)
 end
 
-function simulate(sim::StepSimulator, pomdp::POMDP, policy::Policy, bu::Updater, dist::Any)
-    initialstate = get_initialstate(sim, dist)
+function simulate(sim::StepSimulator, pomdp::POMDP, policy::Policy, bu::Updater, dist::Any, initialstate=nothing)
+    if initialstate == nothing
+        initialstate = get_initialstate(sim, dist)
+    end
     initial_belief = initialize_belief(bu, dist)
     symtuple = convert_spec(sim.spec, POMDP)
     if sim.max_steps == nothing
@@ -50,8 +52,7 @@ function MDPSimIterator(spec::Union{Tuple, Symbol}, mdp::MDP, policy::Policy, rn
     return MDPSimIterator{spec, typeof(mdp), typeof(policy), typeof(rng), typeof(init_state)}(mdp, policy, rng, init_state, max_steps)
 end
 
-Base.iterate(it::MDPSimIterator) = (1, it.init_state)
-function Base.iterate(it::MDPSimIterator, is::Tuple{Int, S}) where S
+function Base.iterate(it::MDPSimIterator, is::Tuple{Int, S}=(1, it.init_state)) where S
     if isterminal(it.mdp, is[2]) || is[1] > it.max_steps 
         return nothing 
     end 
@@ -86,9 +87,8 @@ function POMDPSimIterator(spec::Union{Tuple,Symbol}, pomdp::POMDP, policy::Polic
                                                 max_steps)
 end
 
-Base.iterate(it::POMDPSimIterator) = (1, it.init_state)
-function Base.iterate(it::POMDPSimIterator, is::Tuple{Int, S, B}) where {S,B}
-    if isterminal(it.mdp, is[2]) || is[1] > it.max_steps 
+function Base.iterate(it::POMDPSimIterator, is::Tuple{Int,S,B} = (1, it.init_state, it.init_belief)) where {S,B}
+    if isterminal(it.pomdp, is[2]) || is[1] > it.max_steps 
         return nothing 
     end 
     s = is[2]
