@@ -1,6 +1,7 @@
 name = "POMDPSimulators"
 uuid = "a011d688-a0b9-11e8-2c70-290aeeeab7c9"
 authors = ["rejuvyesh <mail@rejuvyesh.com>"]
+version = "0.0.0"
 
 
 [deps]
