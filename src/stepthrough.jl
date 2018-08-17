@@ -50,10 +50,11 @@ function MDPSimIterator(spec::Union{Tuple, Symbol}, mdp::MDP, policy::Policy, rn
     return MDPSimIterator{spec, typeof(mdp), typeof(policy), typeof(rng), typeof(init_state)}(mdp, policy, rng, init_state, max_steps)
 end
 
-
-Base.done(it::MDPSimIterator, is::Tuple{Int, S}) where {S} = isterminal(it.mdp, is[2]) || is[1] > it.max_steps
-Base.start(it::MDPSimIterator) = (1, it.init_state)
-function Base.next(it::MDPSimIterator, is::Tuple{Int, S}) where {S}
+Base.iterate(it::MDPSimIterator) = (1, it.init_state)
+function Base.iterate(it::MDPSimIterator, is::Tuple{Int, S}) where S
+    if isterminal(it.mdp, is[2]) || is[1] > it.max_steps 
+        return nothing 
+    end 
     s = is[2]
     a, ai = action_info(it.policy, s)
     sp, r, i = generate_sri(it.mdp, s, a, it.rng)
