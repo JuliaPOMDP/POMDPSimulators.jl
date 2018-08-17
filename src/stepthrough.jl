@@ -86,9 +86,11 @@ function POMDPSimIterator(spec::Union{Tuple,Symbol}, pomdp::POMDP, policy::Polic
                                                 max_steps)
 end
 
-Base.done(it::POMDPSimIterator, is::Tuple{Int, S, B}) where {S, B} = isterminal(it.pomdp, is[2]) || is[1] > it.max_steps
-Base.start(it::POMDPSimIterator) = (1, it.init_state, it.init_belief)
-function Base.next(it::POMDPSimIterator, is::Tuple{Int, S, B}) where {S, B}
+Base.iterate(it::POMDPSimIterator) = (1, it.init_state)
+function Base.iterate(it::POMDPSimIterator, is::Tuple{Int, S, B}) where {S,B}
+    if isterminal(it.mdp, is[2]) || is[1] > it.max_steps 
+        return nothing 
+    end 
     s = is[2]
     b = is[3]
     a, ai = action_info(it.policy, b)
