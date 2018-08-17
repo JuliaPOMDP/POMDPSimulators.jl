@@ -1,5 +1,5 @@
 # mdp step simulator and stepthrough
-let
+@testset "gridstepsim" begin
     p = GridWorld()
     solver = RandomSolver(MersenneTwister(2))
     policy = solve(solver, p)
@@ -10,7 +10,7 @@ let
         @test isa(sp, statetype(p))
         @test isa(r, Float64)
         @test isa(a, actiontype(p))
-        @test isa(ai, Nothing)
+        @test isa(ai, Missing)
         n_steps += 1
     end
     @test n_steps <= 100
@@ -25,7 +25,7 @@ end
 
 
 # pomdp step simulator and stepthrough
-let
+@testset "babystepsim" begin
     p = BabyPOMDP()
     policy = FeedWhenCrying()
     up = PreviousObservationUpdater()
@@ -37,13 +37,16 @@ let
         @test isa(r, Float64)
         @test isa(a, actiontype(p))
         @test isa(b, Bool)
-        @test ui == nothing
-        @test ai == nothing
-        @test ui == nothing
+        @test ui == missing
+        @test ai == missing
+        @test ui == missing
         n_steps += 1
     end
     @test n_steps == 100
-
+end
+@testset "stepthroughfeed" begin
+    p = BabyPOMDP()
+    policy = FeedWhenCrying()
     n_steps = 0
     for r in stepthrough(p, policy, "r", rng=MersenneTwister(4), max_steps=100)
         @test isa(r, Float64)
@@ -54,7 +57,7 @@ let
 end
 
 # example from stepthrough documentation
-let
+@testset "stepthroughrand" begin
     pomdp = BabyPOMDP()
     policy = RandomPolicy(pomdp)
 
