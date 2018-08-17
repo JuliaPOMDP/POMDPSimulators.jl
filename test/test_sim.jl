@@ -1,27 +1,31 @@
 mdp = GridWorld()
 
-sim(mdp, max_steps=100) do state
+hist = sim(mdp, max_steps=100) do state
     @assert isa(state, GridWorldState)    
     acts = actions(mdp)
     return rand(acts)
 end
+@test length(hist) == 100
 
 pomdp = BabyPOMDP()
 
-sim(pomdp, max_steps=100) do obs
+hist = sim(pomdp, max_steps=100) do obs
     @assert isa(obs, Bool)
     acts = actions(pomdp)
     return rand(acts)
 end
+@test length(hist) == 100
 
-sim(pomdp, false, max_steps=100) do obs
+hist = sim(pomdp, false, max_steps=100) do obs
     @assert isa(obs, Bool)
     acts = actions(pomdp)
     return rand(acts)
 end
+@test length(hist) == 100
 
-sim(pomdp, initialstate=true, max_steps=100) do obs
+hist = sim(pomdp, initialstate=true, max_steps=100) do obs
     @assert isa(obs, Bool)
     acts = actions(pomdp)
     return rand(acts)
 end
+@test length(hist) == 100

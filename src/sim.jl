@@ -60,7 +60,7 @@ end
 function sim(polfunc::Function, pomdp::POMDP,
              initialstate=nothing;
              simulator=nothing,
-             initial_obs=nothing,
+             initialobs=nothing,
              updater=nothing,
              kwargs...
             )
@@ -77,21 +77,21 @@ function sim(polfunc::Function, pomdp::POMDP,
     if simulator==nothing
         simulator = HistoryRecorder(;kwargd...)
     end
-    if initial_obs==nothing && obstype(pomdp) != Nothing
-        initial_obs = default_init_obs(pomdp, initialstate)
+    if initialobs==nothing && obstype(pomdp) != Nothing
+        initialobs = default_init_obs(pomdp, initialstate)
     end
     if updater==nothing
-        updater = PrimedPreviousObservationUpdater{Any}(initial_obs)
+        updater = PreviousObservationUpdater()
     end
     policy = FunctionPolicy(polfunc)
-    simulate(simulator, pomdp, policy, updater, initial_obs, initialstate)
+    simulate(simulator, pomdp, policy, updater, initialobs, initialstate)
 end
 
 function default_init_obs(p::POMDP, s)
     if implemented(generate_o, Tuple{typeof(p), typeof(s), typeof(Random.GLOBAL_RNG)})
         return generate_o(p, s, Random.GLOBAL_RNG)
     else
-        return nothing
+        return missing
     end
 end
 

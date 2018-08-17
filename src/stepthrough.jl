@@ -18,7 +18,7 @@ function simulate(sim::StepSimulator, mdp::MDP{S}, policy::Policy, init_state::S
     else
         max_steps = sim.max_steps
     end
-    return MfDPSimIterator(symtuple, mdp, policy, sim.rng, init_state, max_steps)
+    return MDPSimIterator(symtuple, mdp, policy, sim.rng, init_state, max_steps)
 end
 
 function simulate(sim::StepSimulator, pomdp::POMDP, policy::Policy, bu::Updater=updater(policy))
@@ -30,7 +30,12 @@ function simulate(sim::StepSimulator, pomdp::POMDP, policy::Policy, bu::Updater,
     initialstate = get_initialstate(sim, dist)
     initial_belief = initialize_belief(bu, dist)
     symtuple = convert_spec(sim.spec, POMDP)
-    return POMDPSimIterator(symtuple, pomdp, policy, bu, sim.rng, initial_belief, initialstate, get(sim.max_steps, typemax(Int64)))
+    if sim.max_steps == nothing
+        max_steps = typemax(Int64)
+    else
+        max_steps = sim.max_steps
+    end
+    return POMDPSimIterator(symtuple, pomdp, policy, bu, sim.rng, initial_belief, initialstate, max_steps)
 end
 
 struct MDPSimIterator{SPEC, M<:MDP, P<:Policy, RNG<:AbstractRNG, S}

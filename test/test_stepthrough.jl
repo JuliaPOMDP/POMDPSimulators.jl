@@ -1,23 +1,23 @@
 # mdp step simulator and stepthrough
 let
-    mdp = GridWorld()
+    p = GridWorld()
     solver = RandomSolver(MersenneTwister(2))
-    policy = solve(solver, mdp)
+    policy = solve(solver, p)
     sim = StepSimulator("s,sp,r,a,ai", rng=MersenneTwister(3), max_steps=100)
     n_steps = 0
-    for (s, sp, r, a, ai) in simulate(sim, mdp, policy)
-        @test isa(s, statetype(mdp))
-        @test isa(sp, statetype(mdp))
+    for (s, sp, r, a, ai) in simulate(sim, p, policy)
+        @test isa(s, statetype(p))
+        @test isa(sp, statetype(p))
         @test isa(r, Float64)
-        @test isa(a, actiontype(mdp))
+        @test isa(a, actiontype(p))
         @test isa(ai, Nothing)
         n_steps += 1
     end
     @test n_steps <= 100
 
     n_steps = 0
-    for s in stepthrough(mdp, policy, "s", rng=MersenneTwister(4), max_steps=100)
-        @test isa(s, state_type(mdp))
+    for s in stepthrough(p, policy, "s", rng=MersenneTwister(4), max_steps=100)
+        @test isa(s, statetype(p))
         n_steps += 1
     end
     @test n_steps <= 100
@@ -26,16 +26,16 @@ end
 
 # pomdp step simulator and stepthrough
 let
-    mdp = BabyPOMDP()
+    p = BabyPOMDP()
     policy = FeedWhenCrying()
-    up = PrimedPreviousObservationUpdater(true)
+    up = PreviousObservationUpdater()
     sim = StepSimulator("s,sp,r,a,b,ui,i,ai", rng=MersenneTwister(3), max_steps=100)
     n_steps = 0
-    for (s, sp, r, a, b, ui, i, ai) in simulate(sim, mdp, policy, up)
-        @test isa(s, statetype(mdp))
-        @test isa(sp, statetype(mdp))
+    for (s, sp, r, a, b, ui, i, ai) in simulate(sim, p, policy, up)
+        @test isa(s, statetype(p))
+        @test isa(sp, statetype(p))
         @test isa(r, Float64)
-        @test isa(a, actiontype(mdp))
+        @test isa(a, actiontype(p))
         @test isa(b, Bool)
         @test ui == nothing
         @test ai == nothing
@@ -45,7 +45,7 @@ let
     @test n_steps == 100
 
     n_steps = 0
-    for r in stepthrough(mdp, policy, "r", rng=MersenneTwister(4), max_steps=100)
+    for r in stepthrough(p, policy, "r", rng=MersenneTwister(4), max_steps=100)
         @test isa(r, Float64)
         @test r <= 0
         n_steps += 1
