@@ -84,9 +84,13 @@ end
 # iteration
 # you can iterate through the history and get a (s,a,r,s') or (s,b,a,r,s',o')
 Base.length(h::SimHistory) = n_steps(h)
-Base.start(h::SimHistory) = 1
-Base.done(h::SimHistory, i::Int) = i > n_steps(h)
-Base.next(h::SimHistory, i::Int) = (step_tuple(h, i), i+1)
+function Base.iterate(h::SimHistory, i::Int=1)
+    if i > n_steps(h)
+        return nothing 
+    else
+        return (step_tuple(h, i), i+1)
+    end
+end
 
 function step_tuple(h::MDPHistory, i::Int)
     return (state_hist(h)[i],
@@ -242,8 +246,11 @@ end
 end
 
 Base.length(it::HistoryIterator) = n_steps(it.history)
-Base.start(it::HistoryIterator) = 1
-Base.done(it::HistoryIterator, i::Int) = i > length(it)
-Base.next(it::HistoryIterator, i::Int) = (step_tuple(it, i), i+1)
-
 Base.getindex(it::HistoryIterator, i) = step_tuple(it, i)
+function Base.iterate(it::HistoryIterator, i::Int = 1)
+    if i > length(it)
+        return nothing 
+    else
+        return (step_tuple(it, i), i+1)
+    end
+end
