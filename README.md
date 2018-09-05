@@ -1,5 +1,9 @@
 # POMDPSimulators.jl
 
+[![Build Status](https://travis-ci.org/JuliaPOMDP/POMDPSimulators.jl.svg?branch=master)](https://travis-ci.org/JuliaPOMDP/POMDPSimulators.jl)
+[![Coverage Status](https://coveralls.io/repos/github/JuliaPOMDP/POMDPSimulators.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaPOMDP/POMDPSimulators.jl?branch=master)
+
+
 #### [`rollout.jl`](src/rollout.jl)
 
 `RolloutSimulator` is the simplest MDP or POMDP simulator. When `simulate` is called, it simply simulates a single trajectory of the process and returns the discounted reward.
