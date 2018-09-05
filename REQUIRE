@@ -3,6 +3,5 @@ BeliefUpdaters
 DataFrames
 POMDPModelTools
 POMDPPolicies
-POMDPSimulators
 POMDPs
 ProgressMeter
