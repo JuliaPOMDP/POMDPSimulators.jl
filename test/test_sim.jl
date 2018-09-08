@@ -1,6 +1,6 @@
 
 @testset "GridWorld sim" begin 
-    mdp = GridWorld()
+    mdp = GridWorld(terminals=Set())
     hist = sim(mdp, max_steps=100) do state
         @assert isa(state, GridWorldState)    
         acts = actions(mdp)

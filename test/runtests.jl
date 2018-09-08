@@ -1,13 +1,11 @@
 using POMDPs
 using POMDPPolicies
-# using POMDPModels
+using POMDPModels
 using BeliefUpdaters
 using Random
 using Test
 using POMDPSimulators
 
-#=
-Tests require POMDPModels
 @testset "rollout" begin
     include("test_rollout.jl")
 end
@@ -17,4 +15,6 @@ end
 @testset "stepthrough" begin
     include("test_stepthrough.jl")
 end
-=#
+@testset "history_recorder" begin
+    include("test_history_recorder.jl")
+end
