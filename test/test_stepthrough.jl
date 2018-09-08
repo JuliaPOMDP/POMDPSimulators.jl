@@ -10,7 +10,7 @@
         @test isa(sp, statetype(p))
         @test isa(r, Float64)
         @test isa(a, actiontype(p))
-        @test isa(ai, Missing)
+        @test isa(ai, Nothing)
         n_steps += 1
     end
     @test n_steps <= 100
@@ -39,8 +39,8 @@ end
         @test isa(r, Float64)
         @test isa(a, actiontype(p))
         @test isa(b, Bool)
-        @test isa(ui, Missing)
-        @test isa(ai, Missing)
+        @test isa(ui, Nothing)
+        @test isa(ai, Nothing)
         n_steps += 1
     end
     @test n_steps == 100
