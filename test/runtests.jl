@@ -6,7 +6,6 @@ using Random
 using Test
 using POMDPSimulators
 
-#=
 Tests require POMDPModels
 @testset "rollout" begin
     include("test_rollout.jl")
@@ -17,4 +16,3 @@ end
 @testset "stepthrough" begin
     include("test_stepthrough.jl")
 end
-=#

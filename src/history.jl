@@ -196,6 +196,7 @@ The possible valid elements in the iteration specification are
 - `i` - info from the state transition (from `generate_sri` for MDPs or `generate_sori` for POMDPs)
 - `ai` - info from the policy decision (from `action_info`)
 - `ui` - info from the belief update (from `update_info`)
+- `t` - the timestep index
 """
 eachstep(hist::SimHistory, spec) = HistoryIterator(hist, spec)
 
@@ -223,6 +224,8 @@ function sym_to_call(sym::Symbol)
         return :(ainfo_hist(it.history)[i])
     elseif sym == :ui
         return :(uinfo_hist(it.history)[i])
+    elseif sym == :t
+        return :(i)
     end
 end
 
@@ -231,11 +234,11 @@ end
     if isa(spec, Tuple)
         calls = []
         for sym in spec
-            push!(calls, sym_to_call(sym))
+            push!(calls, :($sym = $(sym_to_call(sym))))
         end
 
         return quote
-            return tuple($(calls...))
+            return ($(calls...))
         end
     else
         @assert isa(spec, Symbol)
