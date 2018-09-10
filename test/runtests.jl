@@ -18,3 +18,6 @@ end
 @testset "history_recorder" begin
     include("test_history_recorder.jl")
 end
+@testset "parallel" begin
+    include("test_parallel.jl")
+end

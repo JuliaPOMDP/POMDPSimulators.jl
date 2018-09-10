@@ -1,3 +1,6 @@
+"""
+Represents everything needed to run and record a single simulation, including model, initial conditions, and metadata.
+"""
 abstract type Sim end
 
 struct POMDPSim <: Sim
@@ -136,7 +139,7 @@ function run_parallel(process::Function, queue::AbstractVector;
     i = 1
     prog = 0
     # based on the simple implementation of pmap here: https://docs.julialang.org/en/latest/manual/parallel-computing
-    frame_lines = Vector{Any}(n)
+    frame_lines = Vector{Any}(missing, n)
     nextidx() = (idx=i; i+=1; idx)
     prog_lock = ReentrantLock()
     @sync begin 
