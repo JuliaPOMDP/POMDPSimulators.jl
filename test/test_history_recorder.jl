@@ -58,6 +58,10 @@ for tuple in r1
     @test isa(tuple[2], actiontype(problem))
     @test isa(tuple[3], Float64)
     @test isa(tuple[4], statetype(problem))
+    @test isa(tuple.s, statetype(problem))
+    @test isa(tuple.a, actiontype(problem))
+    @test isa(tuple.r, Float64)
+    @test isa(tuple.sp, statetype(problem))
 end
 
 @test length(collect(r1)) == n_steps(r1)
@@ -69,13 +73,14 @@ hv = view(r1, 2:length(r1))
 # iterators
 rsum = 0.0
 len = 0
-for (s, a, r, sp, i, ai) in eachstep(hv, (:s,:a,:r,:sp,:i,:ai))
+for (s, a, r, sp, i, ai, t) in eachstep(hv, (:s,:a,:r,:sp,:i,:ai,:t))
     @test isa(s, statetype(problem))
     @test isa(a, actiontype(problem))
     @test isa(r, Float64)
     @test isa(sp, statetype(problem))
     @test isa(i, Nothing)
     @test isa(ai, Nothing)
+    @test isa(t, Int)
     rsum += r
     len += 1
 end
@@ -86,8 +91,10 @@ end
 # @test eltype(collect(it)) == Tuple{Float64, statetype(problem), statetype(problem), actiontype(problem)}
 tuples = collect(eachstep(hv, "(r, sp, s, a)"))
 @test sum(first(t) for t in tuples) == undiscounted_reward(hv)
-tuples = collect(eachstep(hv, "r,sp,s,a"))
+@test sum(t.r for t in tuples) == undiscounted_reward(hv)
+tuples = collect(eachstep(hv, "r,sp,s,a,t"))
 @test sum(first(t) for t in tuples) == undiscounted_reward(hv)
+@test sum(t.r for t in tuples) == undiscounted_reward(hv)
 
 @test collect(eachstep(hv, "r")) == reward_hist(hv)
 

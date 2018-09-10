@@ -71,3 +71,9 @@ end
         println("received observation $o and reward $r")
     end
 end
+
+struct SymPOMDP <: POMDP{Symbol, Symbol, Symbol} end
+@testset "stepthrougherr" begin
+    m = SymPOMDP()
+    @test_throws ErrorException stepthrough(m, RandomPolicy(m), NothingUpdater(), [:init], :init)
+end
