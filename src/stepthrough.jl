@@ -56,10 +56,11 @@ function Base.iterate(it::MDPSimIterator, is::Tuple{Int, S}=(1, it.init_state)) 
     if isterminal(it.mdp, is[2]) || is[1] > it.max_steps 
         return nothing 
     end 
+    t = is[1]
     s = is[2]
     a, ai = action_info(it.policy, s)
     sp, r, i = generate_sri(it.mdp, s, a, it.rng)
-    return (out_tuple(it, (s, a, r, sp, i, ai)), (is[1]+1, sp))
+    return (out_tuple(it, (s, a, r, sp, t, i, ai)), (t+1, sp))
 end
 
 struct POMDPSimIterator{SPEC, M<:POMDP, P<:Policy, U<:Updater, RNG<:AbstractRNG, B, S}
@@ -91,27 +92,27 @@ function Base.iterate(it::POMDPSimIterator, is::Tuple{Int,S,B} = (1, it.init_sta
     if isterminal(it.pomdp, is[2]) || is[1] > it.max_steps 
         return nothing 
     end 
+    t = is[1]
     s = is[2]
     b = is[3]
     a, ai = action_info(it.policy, b)
     sp, o, r, i = generate_sori(it.pomdp, s, a, it.rng)
     bp, ui = update_info(it.updater, b, a, o)
-    return (out_tuple(it, (s, a, r, sp, i, ai, b, o, bp, ui)), (is[1]+1, sp, bp))
+    return (out_tuple(it, (s, a, r, sp, t, i, ai, b, o, bp, ui)), (t+1, sp, bp))
 end
 
-# all is (s, a, r, sp, i, ai) for mdps, (s, a, r, sp, i, ai, b, o, bp) for POMDPs
-sym_to_ind = Dict(sym=>i for (i, sym) in enumerate([:s,:a,:r,:sp,:i,:ai,:b,:o,:bp,:ui]))
+const sym_to_ind = Dict(sym=>i for (i, sym) in enumerate(COMPLETE_POMDP_STEP))
 
 @generated function out_tuple(it::Union{MDPSimIterator, POMDPSimIterator}, all::Tuple)
     spec = it.parameters[1]     
     if isa(spec, Tuple)
         calls = []
         for sym in spec
-            push!(calls, :(all[$(sym_to_ind[sym])]))
+            push!(calls, :($sym = all[$(sym_to_ind[sym])]))
         end
 
         return quote
-            return tuple($(calls...))
+            return ($(calls...),)
         end
     else
         @assert isa(spec, Symbol) "Invalid specification: $spec is not a Symbol or Tuple."
@@ -121,8 +122,8 @@ sym_to_ind = Dict(sym=>i for (i, sym) in enumerate([:s,:a,:r,:sp,:i,:ai,:b,:o,:b
     end
 end
 
-convert_spec(spec, T::Type{POMDP}) = convert_spec(spec, Set(tuple(:sp, :bp, :s, :a, :r, :b, :o, :i, :ai, :ui)))
-convert_spec(spec, T::Type{MDP}) = convert_spec(spec, Set(tuple(:sp, :s, :a, :r, :i, :ai)))
+convert_spec(spec, T::Type{POMDP}) = convert_spec(spec, Set(tuple(:sp, :bp, :s, :a, :r, :b, :o, :i, :ai, :ui, :t)))
+convert_spec(spec, T::Type{MDP}) = convert_spec(spec, Set(tuple(:sp, :s, :a, :r, :i, :ai, :t)))
 
 function convert_spec(spec, recognized::Set{Symbol})
     conv = convert_spec(spec)
@@ -135,9 +136,9 @@ function convert_spec(spec, recognized::Set{Symbol})
 end
 
 function convert_spec(spec::String)
-    syms = [Symbol(m.match) for m in eachmatch(r"(sp|bp|ai|ui|s|a|r|b|o|i)", spec)]
+    syms = [Symbol(m.match) for m in eachmatch(r"(sp|bp|ai|ui|s|a|r|b|o|i|t)", spec)]
     if length(syms) == 0
-        error("$spec does not contain any valid symbols for step iterator output. Valid symbols are sp, bp, ai, ui, s, a, r, b, o, i")
+        error("$spec does not contain any valid symbols for step iterator output. Valid symbols are sp, bp, ai, ui, s, a, r, b, o, i, t")
     end
     if length(syms) == 1
         return Symbol(first(syms))
@@ -191,24 +192,27 @@ Step through an mdp simulation. The initial state is optional. If no spec is giv
 function stepthrough(mdp::MDP{S},
                      policy::Policy,
                      init_state::S,
-                     spec::Union{String, Tuple, Symbol}=(:s,:a,:r,:sp);
+                     spec::Union{String, Tuple, Symbol}=COMPLETE_MDP_STEP;
                      kwargs...) where {S}
     sim = StepSimulator(spec; kwargs...)
     return simulate(sim, mdp, policy, init_state)
 end
 
 """
-    stepthrough(pomdp::POMDP, policy::Policy, [up::Updater, [initial_belief]], [spec="ao"]; [kwargs...])
+    stepthrough(pomdp::POMDP, policy::Policy, [up::Updater, [initial_belief, [initial_state]]], [spec]; [kwargs...])
 
-Step through a pomdp simulation. the updater and initial belief are optional. If no spec is given, (a, o) is used.
+Step through a pomdp simulation. the updater and initial belief are optional.
 """
 function stepthrough(pomdp::POMDP, policy::Policy, args...; kwargs...)
     spec_included=false
     if isa(last(args), Union{String, Tuple, Symbol})
         spec = last(args)
         spec_included = true
+        if spec isa statetype(pomdp) && length(args) == 3
+            error("Ambiguity between `initial_state` and `spec` arguments in stepthrough. Please explicitly specify the initial state and spec.")
+        end
     else
-        spec=(:a,:o)
+        spec = COMPLETE_POMDP_STEP
     end
     sim = StepSimulator(spec; kwargs...)
     return simulate(sim, pomdp, policy, args[1:end-spec_included]...)

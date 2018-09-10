@@ -5,6 +5,11 @@ abstract type SimHistory end
 abstract type AbstractMDPHistory{S,A} <: SimHistory end
 abstract type AbstractPOMDPHistory{S,A,O,B} <: SimHistory end
 
+# Ordering of a complete step tuple:
+# (The general structure is (mdp core, t, mdp info, pomdp core, pomdp info))
+const COMPLETE_POMDP_STEP = (:s,:a,:r,:sp,:t,:i,:ai,:b,:o,:bp,:ui)
+const COMPLETE_MDP_STEP = COMPLETE_POMDP_STEP[1:7]
+
 """
 An object that contains a MDP simulation history
 
@@ -82,7 +87,6 @@ function discounted_reward(h::SimHistory)
 end
 
 # iteration
-# you can iterate through the history and get a (s,a,r,s') or (s,b,a,r,s',o')
 Base.length(h::SimHistory) = n_steps(h)
 function Base.iterate(h::SimHistory, i::Int=1)
     if i > n_steps(h)
@@ -93,19 +97,19 @@ function Base.iterate(h::SimHistory, i::Int=1)
 end
 
 function step_tuple(h::MDPHistory, i::Int)
-    return (state_hist(h)[i],
-            action_hist(h)[i],
-            reward_hist(h)[i],
-            state_hist(h)[i+1]
+    return (s=state_hist(h)[i],
+            a=action_hist(h)[i],
+            r=reward_hist(h)[i],
+            sp=state_hist(h)[i+1]
            )
 end
 function step_tuple(h::POMDPHistory, i::Int)
-    return (state_hist(h)[i],
-            belief_hist(h)[i],
-            action_hist(h)[i],
-            reward_hist(h)[i],
-            state_hist(h)[i+1],
-            observation_hist(h)[i]
+    return (s=state_hist(h)[i],
+            b=belief_hist(h)[i],
+            a=action_hist(h)[i],
+            r=reward_hist(h)[i],
+            sp=state_hist(h)[i+1],
+            o=observation_hist(h)[i]
            )
 end
 
@@ -156,7 +160,7 @@ end
 # Note this particular function is not type-stable
 function HistoryIterator(history::SimHistory, spec::String)
     # XXX should throw warnings for unrecognized specification characters
-    syms = [Symbol(m.match) for m in eachmatch(r"(sp|bp|ai|ui|s|a|r|b|o|i)", spec)]
+    syms = [Symbol(m.match) for m in eachmatch(r"(sp|bp|ai|ui|s|a|r|b|o|i|t)", spec)]
     if length(syms) == 1
         return HistoryIterator{typeof(history), first(syms)}(history)
     else
@@ -238,7 +242,7 @@ end
         end
 
         return quote
-            return ($(calls...))
+            return ($(calls...),)
         end
     else
         @assert isa(spec, Symbol)
