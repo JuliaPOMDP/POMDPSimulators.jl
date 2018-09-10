@@ -8,22 +8,22 @@ let
     q = []
     push!(q, Sim(pomdp, fwc, max_steps=32, rng=MersenneTwister(4), metadata=Dict(:policy=>"feed when crying")))
     push!(q, Sim(pomdp, fwc, max_steps=32, rng=MersenneTwister(4), metadata=Dict(:policy=>"feed when crying")))
-    push!(q, Sim(pomdp, rnd, max_steps=32, rng=MersenneTwister(4), metadata=Dict(:policy=>"random")))
+    push!(q, Sim(pomdp, rnd, max_steps=32, rng=MersenneTwister(4), metadata=(policy="random",)))
 
     println("There should be a warning here:")
     run_parallel(q)
 
     procs = addprocs(1)
-    @everywhere using POMDPToolbox
+    @everywhere using POMDPSimulators
     @everywhere using POMDPModels
     println("There should not be a warning here:")
     @show run_parallel(q) do sim, hist
-        return [:steps=>n_steps(hist), :reward=>discounted_reward(hist)]
+        return (steps=n_steps(hist), reward=discounted_reward(hist))
     end
 
     @show data = run_parallel(q)
     @test data[1, :reward] == data[2, :reward]
-    @test var(data[:reward][1:2]) == 0.0
+    @test data[:reward][1] == data[:reward][2]
     rmprocs(procs)
 
     mdp = GridWorld()
@@ -34,7 +34,7 @@ end
 
 # example from readme
 let
-    using POMDPToolbox
+    using POMDPSimulators
     using POMDPModels
 
     pomdp = BabyPOMDP()
@@ -60,7 +60,7 @@ let
     # to perform additional analysis on each of the simulations one can define a processing function with the `do` syntax:
     data2 = run_parallel(q, progress=false) do sim, hist
         println("finished a simulation - final state was $(last(state_hist(hist)))")
-        return [:steps=>n_steps(hist), :reward=>discounted_reward(hist)]
+        return (steps=n_steps(hist), reward=discounted_reward(hist))
     end
 
     @show data2

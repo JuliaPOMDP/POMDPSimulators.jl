@@ -10,7 +10,7 @@ struct POMDPSim <: Sim
     updater::Updater
     initial_belief::Any
     initialstate::Any
-    metadata::Dict{Symbol}
+    metadata::NamedTuple
 end
 
 problem(sim::POMDPSim) = sim.pomdp
@@ -20,13 +20,13 @@ struct MDPSim <: Sim
     mdp::MDP
     policy::Policy
     initialstate::Any
-    metadata::Dict{Symbol}
+    metadata::NamedTuple
 end
 
 problem(sim::MDPSim) = sim.mdp
 
 """
-    Sim(p::POMDP, policy::Policy, metadata=Dict(:note=>"a note"))
+    Sim(p::POMDP, policy::Policy, metadata=(note="a note",))
     Sim(p::POMDP, policy::Policy[, updater[, initial_belief[, initialstate]]]; kwargs...)
 
 Create a `Sim` object that represents a POMDP simulation.
@@ -39,7 +39,7 @@ function Sim(pomdp::POMDP,
              rng::AbstractRNG=Random.GLOBAL_RNG,
              max_steps::Int=typemax(Int),
              simulator::Simulator=HistoryRecorder(rng=rng, max_steps=max_steps),
-             metadata::Dict{Symbol}=Dict{Symbol, Any}()
+             metadata = NamedTuple()
             )
 
     if initialstate == nothing && statetype(pomdp) != Nothing
@@ -47,7 +47,7 @@ function Sim(pomdp::POMDP,
     else
         is = initialstate
     end
-    return POMDPSim(simulator, pomdp, policy, up, initial_belief, is, metadata)
+    return POMDPSim(simulator, pomdp, policy, up, initial_belief, is, merge(NamedTuple(), metadata))
 end
 
 """
@@ -62,7 +62,7 @@ A vector of `Sim` objects can be executed with `run` or `run_parallel`.
 - `rng::AbstractRNG=Random.GLOBAL_RNG`
 - `max_steps::Int=typemax(Int)`
 - `simulator::Simulator=HistoryRecorder(rng=rng, max_steps=max_steps)`
-- `metadata::Dict{Symbol}=Dict{Symbol, Any}()` a dictionary of metadata for the sim that will be recorded, e.g. `Dict(:solver_iterations=>500)`.
+- `metadata::NamedTuple a named tuple (or dictionary) of metadata for the sim that will be recorded, e.g. `(solver_iterations=500,)`.
 """
 function Sim(mdp::MDP,
              policy::Policy,
@@ -70,7 +70,7 @@ function Sim(mdp::MDP,
              rng::AbstractRNG=Random.GLOBAL_RNG,
              max_steps::Int=typemax(Int),
              simulator::Simulator=HistoryRecorder(rng=rng, max_steps=max_steps),
-             metadata::Dict{Symbol}=Dict{Symbol, Any}()
+             metadata = NamedTuple()
             )
 
     if initialstate == nothing && statetype(mdp) != Nothing
@@ -78,13 +78,13 @@ function Sim(mdp::MDP,
     else
         is = initialstate
     end
-    return MDPSim(simulator, mdp, policy, is, metadata)
+    return MDPSim(simulator, mdp, policy, is, merge(NamedTuple(), metadata))
 end
 
 POMDPs.simulate(s::POMDPSim) = simulate(s.simulator, s.pomdp, s.policy, s.updater, s.initial_belief, s.initialstate)
 POMDPs.simulate(s::MDPSim) = simulate(s.simulator, s.mdp, s.policy, s.initialstate)
 
-default_process(s::Sim, r::Float64) = :reward=>r
+default_process(s::Sim, r::Float64) = (reward=r,)
 default_process(s::Sim, hist::SimHistory) = default_process(s, discounted_reward(hist))
 
 run_parallel(queue::AbstractVector; kwargs...) = run_parallel(default_process, queue; kwargs...)
@@ -100,7 +100,7 @@ By default, the `DataFrame` will contain the reward for each simulation and the 
 # Arguments
 - `queue`: List of `Sim` objects to be executed
 - `f`: Function to process the results of each simulation
-This function should take two arguments, (1) the `Sim` that was executed and (2) the result of the simulation, by default a `SimHistory`. It should return a dictionary or vector of pairs of `Symbol`s and values that will appear in the dataframe. See Examples below.
+This function should take two arguments, (1) the `Sim` that was executed and (2) the result of the simulation, by default a `SimHistory`. It should return a named tuple that will appear in the dataframe. See Examples below.
 
 ## Keyword Arguments
 - `progress`: a `ProgressMeter.Progress` for showing progress through the simulations; `progress=false` will suppress the progress meter
@@ -109,7 +109,7 @@ This function should take two arguments, (1) the `Sim` that was executed and (2)
 
 ```julia
 run_parallel(queue) do sim, hist
-    return [:n_steps=>n_steps(hist), :reward=>discounted_reward(hist)]
+    return (n_steps=n_steps(hist), reward=discounted_reward(hist))
 end
 ```
 will return a dataframe with with the number of steps and the reward in it.
@@ -154,7 +154,7 @@ function run_parallel(process::Function, queue::AbstractVector;
                         frame_lines[idx] = remotecall_fetch(p, queue[idx]) do sim
                             result = simulate(sim)
                             output = process(sim, result)
-                            return append_metadata(output, sim.metadata)
+                            return merge(sim.metadata, output)
                         end
                         if progress isa Progress
                             lock(prog_lock)
@@ -191,25 +191,21 @@ function Base.run(process::Function, queue::AbstractVector; show_progress=true)
         @showprogress for sim in queue
             result = simulate(sim)
             output = process(sim, result)
-            line = append_metadata(output, sim.metadata)
+            line = merge(sim.metadata, output)
             push!(lines, line)
         end
     else
         for sim in queue
             result = simulate(sim)
             output = process(sim, result)
-            line = append_metadata(output, sim.metadata)
+            line = merge(sim.metadata, output)
             push!(lines, line)
         end
     end
     return create_dataframe(lines)
 end
 
-append_metadata(single::Pair, metadata::Dict) = append!(Any[single], collect(metadata))
-append_metadata(pairvec::AbstractVector, metadata::Dict) = vcat(pairvec, collect(metadata))
-append_metadata(d::Dict, metadata::Dict) = merge!(d, metadata)
-
-metadata_as_pairs(s::Sim) = convert(Array{Any}, collect(s.metadata))
+# metadata_as_pairs(s::Sim) = convert(Array{Any}, collect(s.metadata))
 
 function create_dataframe(lines::Vector)
     master = Dict{Symbol, AbstractVector}()
@@ -219,20 +215,20 @@ function create_dataframe(lines::Vector)
     return DataFrame(master)
 end
 
-function _push_line!(d::Dict{Symbol, AbstractVector}, line)
+function push_line!(d::Dict{Symbol, AbstractVector}, line::NamedTuple)
     if isempty(d)
         len = 0
     else
         len = length(first(values(d)))
     end
-    for (key, val) in line
+    for (key, val) in pairs(line)
         T = typeof(val)
         if !haskey(d, key)
-            d[key] = fill!(Array{Union{T,Missing}}(len), missing)
+            d[key] = Vector{Union{T,Missing}}(missing, len)
         end
         data = d[key]
         if !isa(val,eltype(data))
-            d[key] = convert(Array{Any,1}, data)
+            d[key] = convert(Array{promote_type(typeof(val), eltype(data)),1}, data)
         end
         push!(d[key], val)
     end
@@ -243,8 +239,3 @@ function _push_line!(d::Dict{Symbol, AbstractVector}, line)
     end
     return d
 end
-push_line!(d::Dict{Symbol, AbstractVector}, line::Dict) = _push_line!(d, line)
-push_line!(d::Dict{Symbol, AbstractVector}, line::DataFrame) = _push_line!(d, n=>first(line[n]) for n in names(line))
-push_line!(d::Dict{Symbol, AbstractVector}, line::AbstractVector) = _push_line!(d, line)
-push_line!(d::Dict{Symbol, AbstractVector}, line::Tuple) = _push_line!(d, line)
-push_line!(d::Dict{Symbol, AbstractVector}, line::Pair) = _push_line!(d, (line,))
