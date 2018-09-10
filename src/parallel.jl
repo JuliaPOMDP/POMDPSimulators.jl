@@ -205,8 +205,6 @@ function Base.run(process::Function, queue::AbstractVector; show_progress=true)
     return create_dataframe(lines)
 end
 
-# metadata_as_pairs(s::Sim) = convert(Array{Any}, collect(s.metadata))
-
 function create_dataframe(lines::Vector)
     master = Dict{Symbol, AbstractVector}()
     for line in lines
