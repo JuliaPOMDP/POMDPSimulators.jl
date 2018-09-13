@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Parallel · POMDPSimulators.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link href="assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>POMDPSimulators.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="search.html"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="history_recorder.html">History</a></li><li><a class="toctext" href="index.html">-</a></li><li class="current"><a class="toctext" href="parallel.html">Parallel</a><ul class="internal"></ul></li><li><a class="toctext" href="rollout.html">Rollout</a></li><li><a class="toctext" href="sim.html">Sim</a></li><li><a class="toctext" href="stepthrough.html">Stepping through</a></li></ul></nav><article id="docs"><header><nav><ul><li><a href="parallel.html">Parallel</a></li></ul><a class="edit-page" href="https://github.com/JuliaPOMDP/POMDPSimulators.jl/blob/master/docs/src/parallel.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Parallel</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Parallel-1" href="#Parallel-1">Parallel</a></h1><p>The <code>run_parallel</code> function can be used to conveniently run simulations in parallel. Example:</p><pre><code class="language-julia">using POMDPModels
+using POMDPPolicies
+using POMDPSimulators
+
+pomdp = BabyPOMDP()
+fwc = FeedWhenCrying()
+rnd = solve(RandomSolver(MersenneTwister(7)), pomdp)
+
+q = [] # vector of the simulations to be run
+push!(q, Sim(pomdp, fwc, max_steps=32, rng=MersenneTwister(4), metadata=Dict(:policy=&gt;&quot;feed when crying&quot;)))
+push!(q, Sim(pomdp, rnd, max_steps=32, rng=MersenneTwister(4), metadata=Dict(:policy=&gt;&quot;random&quot;)))
+
+# this creates two simulations, one with the feed-when-crying policy and one with a random policy
+
+data = run_parallel(q)
+
+# by default, the dataframe output contains the reward and the contents of `metadata`
+@show data
+# data = 2×2 DataFrames.DataFrame
+# │ Row │ policy             │ reward   │
+# ├─────┼────────────────────┼──────────┤
+# │ 1   │ &quot;feed when crying&quot; │ -4.5874  │
+# │ 2   │ &quot;random&quot;           │ -27.4139 │
+
+# to perform additional analysis on each of the simulations one can define a processing function with the `do` syntax:
+data2 = run_parallel(q, progress=false) do sim, hist
+println(&quot;finished a simulation - final state was $(last(state_hist(hist)))&quot;)
+return [:steps=&gt;n_steps(hist), :reward=&gt;discounted_reward(hist)]
+end
+
+@show data2
+# 2×3 DataFrames.DataFrame
+# │ Row │ policy             │ reward   │ steps │
+# ├─────┼────────────────────┼──────────┼───────┤
+# │ 1   │ &quot;feed when crying&quot; │ -18.2874 │ 32.0  │
+# │ 2   │ &quot;random&quot;           │ -17.7054 │ 32.0  │
+</code></pre><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="POMDPSimulators.run_parallel" href="#POMDPSimulators.run_parallel"><code>POMDPSimulators.run_parallel</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">run_parallel(queue::Vector{Sim})
+run_parallel(f::Function, queue::Vector{Sim})</code></pre><p>Run <code>Sim</code> objects in <code>queue</code> in parallel and return results as a <code>DataFrame</code>.</p><p>By default, the <code>DataFrame</code> will contain the reward for each simulation and the metadata provided to the sim.</p><p><strong>Arguments</strong></p><ul><li><code>queue</code>: List of <code>Sim</code> objects to be executed</li><li><code>f</code>: Function to process the results of each simulation</li></ul><p>This function should take two arguments, (1) the <code>Sim</code> that was executed and (2) the result of the simulation, by default a <code>SimHistory</code>. It should return a dictionary or vector of pairs of <code>Symbol</code>s and values that will appear in the dataframe. See Examples below.</p><p><strong>Keyword Arguments</strong></p><ul><li><code>progress</code>: a <code>ProgressMeter.Progress</code> for showing progress through the simulations; <code>progress=false</code> will suppress the progress meter</li></ul><p><strong>Examples</strong></p><pre><code class="language-julia">run_parallel(queue) do sim, hist
+    return [:n_steps=&gt;n_steps(hist), :reward=&gt;discounted_reward(hist)]
+end</code></pre><p>will return a dataframe with with the number of steps and the reward in it.</p></div></div><a class="source-link" target="_blank" href="https://github.com/JuliaPOMDP/POMDPSimulators.jl/blob/7b18c140b39c05fadc386cd2491e671e89c549ee/src/parallel.jl#L89-L113">source</a></section><footer><hr/><a class="previous" href="index.html"><span class="direction">Previous</span><span class="title">-</span></a><a class="next" href="rollout.html"><span class="direction">Next</span><span class="title">Rollout</span></a></footer></article></body></html>
