@@ -141,7 +141,7 @@ function simulate(sim::HistoryRecorder,
             push!(ih, i)
 
             bp, ui = update_info(bu, bh[step], ah[step], oh[step])
-            push!(bh, bp)
+            bh = push_belief(bh, bp)
             push!(uih, ui)
 
             step += 1
@@ -258,4 +258,17 @@ end
 
 function get_initialstate(sim::Simulator, mdp::Union{MDP,POMDP})
     return initialstate(mdp, sim.rng)
+end
+
+# this is kind of a hack in cases where the belief isn't stable
+push_belief(bh::Vector{T}, b::T) where T = push!(bh, b)
+function push_belief(bh::Vector{T}, b::B) where {B, T}
+    if !(T isa Union) # if T is not already a Union, try making a Union of the two types; don't jump straight to Any
+        new = Vector{Union{T,B}}(undef, length(bh)+1)
+    else
+        new = Vector{promote_type(T, B)}(undef, length(bh)+1)
+    end
+    new[1:end-1] = bh
+    new[end] = b
+    return new
 end

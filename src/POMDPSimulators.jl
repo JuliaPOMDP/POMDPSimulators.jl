@@ -7,6 +7,7 @@ using DataFrames
 using POMDPPolicies
 using POMDPModelTools
 using BeliefUpdaters
+using Distributed
 
 import POMDPs: simulate, discount
 
