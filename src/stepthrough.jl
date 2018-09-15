@@ -183,7 +183,7 @@ Under the hood, this function creates a `StepSimulator` with `spec` and returns 
 """
 function stepthrough end # for documentation
 
-function stepthrough(mdp::MDP, policy::Policy, spec::Union{String, Tuple, Symbol}=(:s,:a,:r,:sp); kwargs...)
+function stepthrough(mdp::MDP, policy::Policy, spec::Union{String, Tuple, Symbol}=COMPLETE_MDP_STEP; kwargs...)
     sim = StepSimulator(spec; kwargs...)
     return simulate(sim, mdp, policy)
 end
