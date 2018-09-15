@@ -41,7 +41,7 @@ for ui in eachstep(r2, "ui")
     @test ui == nothing
 end
 
-problem = GridWorld()
+problem = LegacyGridWorld()
 policy = RandomPolicy(problem, rng=MersenneTwister(2))
 steps=10
 sim = HistoryRecorder(max_steps=steps, rng=MersenneTwister(3))

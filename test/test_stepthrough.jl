@@ -1,6 +1,6 @@
 # mdp step simulator and stepthrough
 @testset "gridstepsim" begin
-    p = GridWorld()
+    p = LegacyGridWorld()
     solver = RandomSolver(MersenneTwister(2))
     policy = solve(solver, p)
     sim = StepSimulator("s,sp,r,a,ai", rng=MersenneTwister(3), max_steps=100)
@@ -44,6 +44,9 @@ end
         n_steps += 1
     end
     @test n_steps == 100
+
+    # test with only two args
+    collect(stepthrough(p, Starve(); max_steps=3))
 end
 @testset "stepthroughfeed" begin
     p = BabyPOMDP()

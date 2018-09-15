@@ -52,6 +52,8 @@ function MDPSimIterator(spec::Union{Tuple, Symbol}, mdp::MDP, policy::Policy, rn
     return MDPSimIterator{spec, typeof(mdp), typeof(policy), typeof(rng), typeof(init_state)}(mdp, policy, rng, init_state, max_steps)
 end
 
+Base.IteratorSize(::Type{<:MDPSimIterator}) = Base.SizeUnknown()
+
 function Base.iterate(it::MDPSimIterator, is::Tuple{Int, S}=(1, it.init_state)) where S
     if isterminal(it.mdp, is[2]) || is[1] > it.max_steps 
         return nothing 
@@ -87,6 +89,8 @@ function POMDPSimIterator(spec::Union{Tuple,Symbol}, pomdp::POMDP, policy::Polic
                                                 init_state,
                                                 max_steps)
 end
+
+Base.IteratorSize(::Type{<:POMDPSimIterator}) = Base.SizeUnknown()
 
 function Base.iterate(it::POMDPSimIterator, is::Tuple{Int,S,B} = (1, it.init_state, it.init_belief)) where {S,B}
     if isterminal(it.pomdp, is[2]) || is[1] > it.max_steps 
@@ -205,7 +209,7 @@ Step through a pomdp simulation. the updater and initial belief are optional.
 """
 function stepthrough(pomdp::POMDP, policy::Policy, args...; kwargs...)
     spec_included=false
-    if isa(last(args), Union{String, Tuple, Symbol})
+    if !isempty(args) && isa(last(args), Union{String, Tuple, Symbol})
         spec = last(args)
         spec_included = true
         if spec isa statetype(pomdp) && length(args) == 3

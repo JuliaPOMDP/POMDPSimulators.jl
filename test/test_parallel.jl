@@ -26,7 +26,7 @@ let
     @test data[:reward][1] == data[:reward][2]
     rmprocs(procs)
 
-    mdp = GridWorld()
+    mdp = LegacyGridWorld()
     q = []
     push!(q, Sim(mdp, RandomPolicy(mdp), max_steps=100))
     run(q)

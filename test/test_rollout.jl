@@ -11,13 +11,13 @@ let
     sim = RolloutSimulator(max_steps=10, rng=Random.MersenneTwister(1))
     dummy = @inferred simulate(sim, problem, policy, updater(policy), nothing, true)
 
-    problem = GridWorld()
+    problem = LegacyGridWorld()
     solver = RandomSolver(rng=Random.MersenneTwister(1))
     policy = solve(solver, problem)
     sim = RolloutSimulator(max_steps=10, rng=Random.MersenneTwister(1))
     r2 = @inferred simulate(sim, problem, policy, initialstate(problem, sim.rng))
 
-    problem = GridWorld()
+    problem = LegacyGridWorld()
     solver = RandomSolver(rng=Random.MersenneTwister(1))
     policy = solve(solver, problem)
     sim = RolloutSimulator(Random.MersenneTwister(1), 10) # new constructor
