@@ -204,8 +204,8 @@ The possible valid elements in the iteration specification are
 """
 eachstep(hist::SimHistory, spec) = HistoryIterator(hist, spec)
 
-eachstep(mh::AbstractMDPHistory) = eachstep(mh, (:s, :a, :r, :sp))
-eachstep(mh::AbstractPOMDPHistory) = eachstep(mh, (:a, :o))
+eachstep(mh::AbstractMDPHistory) = eachstep(mh, COMPLETE_MDP_STEP)
+eachstep(mh::AbstractPOMDPHistory) = eachstep(mh, COMPLETE_POMDP_STEP)
 
 function sym_to_call(sym::Symbol)
     if sym == :s
