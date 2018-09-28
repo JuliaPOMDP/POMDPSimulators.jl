@@ -42,8 +42,8 @@ for ui in eachstep(r2, "ui")
 end
 
 # test that complete step is returned
-step = first(eachstep(r2)
-for char in POMDPSimulators.COMPLETE_POMDP_STEP
+step = first(eachstep(r2))
+for key in POMDPSimulators.COMPLETE_POMDP_STEP
     @test haskey(step, key)
 end
 
