@@ -6,6 +6,16 @@
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliapomdp.github.io/POMDPSimulators.jl/stable)
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://juliapomdp.github.io/POMDPSimulators.jl/latest)
 
+This package contains several simulators for POMDPs.jl. Please see the documentation: https://juliapomdp.github.io/POMDPSimulators.jl/stable
+
+To decide which simulator to use, 
+
+## Installation
+
+```julia
+import Pkg
+Pkg.add("POMDPSimulators")
+```
 
 #### [`rollout.jl`](src/rollout.jl)
 

@@ -2,12 +2,12 @@
 # maintained by @zsunberg
 
 """
-    sim(polfunc::Function, mdp::MDP)
-    sim(polfunc::Function, pomdp::POMDP)
+    sim(polfunc::Function, mdp::MDP[, initial_state]; [kwargs...])
+    sim(polfunc::Function, pomdp::POMDP[, initial_state])
 
 Alternative way of running a simulation with a function specifying how to calculate the action at each timestep.
 
-The intended usage is
+# Usage
 
     sim(mdp) do s
         # code that calculates action `a` based on `s` - this is the policy
@@ -25,13 +25,19 @@ for an MDP or
 
 for a POMDP.
 
+# Keyword Arguments
+
 Use the `simulator` keyword argument to specify any simulator to run the simulation. If nothing is specified for the simulator, a HistoryRecorder will be used as the simulator, with all keyword arguments forwarded to it, e.g.
 
-    sim(mdp, max_steps=100) do s
+    sim(mdp, max_steps=100, show_progress=true) do s
         # ...
     end
 
-will limit the simulation to 100 steps
+will limit the simulation to 100 steps.
+
+The POMDP version also has two additional keyword arguments:
+- `initialobs`: this will control the initial observation given to the policy function.
+- `updater`: if provided, this updater will be used to update the belief, and the belief will be used as the argument to the policy function. If a custom updater is provided, the `initialobs` keyword argument should be used to specify the initial belief.
 """
 function sim end
 

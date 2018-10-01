@@ -1,5 +1,13 @@
 """
 Represents everything needed to run and record a single simulation, including model, initial conditions, and metadata.
+
+A vector of `Sim` objects can be executed with [`run`](@ref) or [`run_parallel`](@ref).
+
+## Keyword Arguments
+- `rng::AbstractRNG=Random.GLOBAL_RNG`
+- `max_steps::Int=typemax(Int)`
+- `simulator::Simulator=HistoryRecorder(rng=rng, max_steps=max_steps)`
+- `metadata::NamedTuple a named tuple (or dictionary) of metadata for the sim that will be recorded, e.g. `(solver_iterations=500,)`.
 """
 abstract type Sim end
 
@@ -51,18 +59,10 @@ function Sim(pomdp::POMDP,
 end
 
 """
-    Sim(p::MDP, policy::Policy, metadata=Dict(:note=>"a note"))
+    Sim(p::MDP, policy::Policy, metadata=(note="a note",))
     Sim(p::MDP, policy::Policy[, initialstate]; kwargs...)
 
 Create a `Sim` object that represents a MDP simulation.
-
-A vector of `Sim` objects can be executed with `run` or `run_parallel`.
-
-## Keyword Arguments
-- `rng::AbstractRNG=Random.GLOBAL_RNG`
-- `max_steps::Int=typemax(Int)`
-- `simulator::Simulator=HistoryRecorder(rng=rng, max_steps=max_steps)`
-- `metadata::NamedTuple a named tuple (or dictionary) of metadata for the sim that will be recorded, e.g. `(solver_iterations=500,)`.
 """
 function Sim(mdp::MDP,
              policy::Policy,

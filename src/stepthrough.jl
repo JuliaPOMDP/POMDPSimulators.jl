@@ -3,12 +3,11 @@
 
 mutable struct StepSimulator <: Simulator
     rng::AbstractRNG
-    initialstate::Union{Nothing,Any}
     max_steps::Union{Nothing,Any}
     spec
 end
-function StepSimulator(spec; rng=Random.GLOBAL_RNG, initialstate=nothing, max_steps=nothing)
-    return StepSimulator(rng, initialstate, max_steps, spec)
+function StepSimulator(spec; rng=Random.GLOBAL_RNG, max_steps=nothing)
+    return StepSimulator(rng, max_steps, spec)
 end
 
 function simulate(sim::StepSimulator, mdp::MDP{S}, policy::Policy, init_state::S=get_initialstate(sim, mdp)) where {S}
@@ -162,7 +161,9 @@ convert_spec(spec::Symbol) = spec
 
 """
     stepthrough(problem, policy, [spec])
-    stepthrough(problem, policy, [spec], [rng=rng], [max_steps=max_steps], [initialstate=initialstate])
+    stepthrough(problem, policy, [spec], [rng=rng], [max_steps=max_steps])
+    stepthrough(mdp::MDP, policy::Policy, [init_state], [spec]; [kwargs...])
+    stepthrough(pomdp::POMDP, policy::Policy, [up::Updater, [initial_belief, [initial_state]]], [spec]; [kwargs...])
 
 Create a simulation iterator. This is intended to be used with for loop syntax to output the results of each step *as the simulation is being run*. 
 
@@ -177,7 +178,7 @@ Example:
         println("received observation \$o and reward \$r")
     end
 
-The spec argument can be a string, tuple of symbols, or single symbol and follows the same pattern as `eachstep` called on a `SimHistory` object.
+The optional `spec` argument can be a string, tuple of symbols, or single symbol and follows the same pattern as [`eachstep`](@ref) called on a `SimHistory` object.
 
 Under the hood, this function creates a `StepSimulator` with `spec` and returns a `[PO]MDPSimIterator` by calling simulate with all of the arguments except `spec`. All keyword arguments are passed to the `StepSimulator` constructor.
 """
@@ -188,11 +189,6 @@ function stepthrough(mdp::MDP, policy::Policy, spec::Union{String, Tuple, Symbol
     return simulate(sim, mdp, policy)
 end
 
-"""
-    stepthrough(mdp::MDP, policy::Policy, [init_state], [spec="sarsp"]; [kwargs...])
-
-Step through an mdp simulation. The initial state is optional. If no spec is given, (s, a, r, sp) is used.
-"""
 function stepthrough(mdp::MDP{S},
                      policy::Policy,
                      init_state::S,
@@ -202,11 +198,6 @@ function stepthrough(mdp::MDP{S},
     return simulate(sim, mdp, policy, init_state)
 end
 
-"""
-    stepthrough(pomdp::POMDP, policy::Policy, [up::Updater, [initial_belief, [initial_state]]], [spec]; [kwargs...])
-
-Step through a pomdp simulation. the updater and initial belief are optional.
-"""
 function stepthrough(pomdp::POMDP, policy::Policy, args...; kwargs...)
     spec_included=false
     if !isempty(args) && isa(last(args), Union{String, Tuple, Symbol})

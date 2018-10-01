@@ -189,6 +189,13 @@ end
 ```
 returns the start state, action, reward and destination state for each step of the simulation.
 
+Alternatively, instead of expanding the steps implicitly, the elements of the step can be accessed as fields (since each step is a `NamedTuple`):
+```julia
+for step in eachstep(h, "(s, a, r, sp)")    
+    println("reward \$(step.r) received when state \$(step.sp) was reached after action \$(step.a) was taken in state \$(step.s)")
+end
+```
+
 The possible valid elements in the iteration specification are
 - `s` - the initial state in a step
 - `b` - the initial belief in the step (for POMDPs only)
