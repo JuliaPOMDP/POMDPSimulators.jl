@@ -96,7 +96,8 @@ function simulate(sim::RolloutSimulator, pomdp::POMDP, policy::Policy, updater::
 
     step = 1
 
-    while disc > eps && !isterminal(pomdp, s) && step <= max_steps # TODO also check for terminal observation
+    while disc > eps && !isterminal(pomdp, s) && step <= max_steps
+
         a = action(policy, b)
 
         sp, o, r = generate_sor(pomdp, s, a, sim.rng)

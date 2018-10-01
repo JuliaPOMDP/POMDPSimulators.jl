@@ -18,6 +18,7 @@ Keyword Arguments:
     - `sizehint::Int`: the expected length of the simulation (for preallocation)
 
 Usage (optional arguments in brackets):
+
     hr = HistoryRecorder()
     history = simulate(hr, pomdp, policy, [updater [, init_belief [, init_state]]])
 """
