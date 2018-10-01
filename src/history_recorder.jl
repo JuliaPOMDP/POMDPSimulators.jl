@@ -42,9 +42,6 @@ function HistoryRecorder(;rng=MersenneTwister(rand(UInt32)),
                           sizehint=nothing,
                           capture_exception=false,
                           show_progress=false)
-    # if !isnull(initialstate)
-    #     warn("The initialstate argument for HistoryRecorder is deprecated. The initial state should be specified as the last argument to simulate(...).")
-    # end
     return HistoryRecorder(rng, capture_exception, show_progress, max_steps, eps, sizehint)
 end
 
