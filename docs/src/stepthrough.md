@@ -21,6 +21,6 @@ The `StepSimulator` contained in this file can provide the same functionality wi
 ```julia
 sim = StepSimulator("s,a,r,sp")
 for (s,a,r,sp) in simulate(sim, problem, policy)
-# do something
+    # do something
 end
 ```
