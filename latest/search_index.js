@@ -93,7 +93,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "Home",
     "category": "section",
-    "text": "POMDPSimulators is a collection of utilities for stepping through and recording rollouts of POMDPs.jl models.If you are just getting started, probably the easiest way to begin is the stepthrough function. Otherwise, consult the Which Simulator Should I Use? page."
+    "text": "POMDPSimulators is a collection of utilities for simulating POMDPs.jl models. [TODO: add link to standard]If you are just getting started, probably the easiest way to begin is the stepthrough function. Otherwise, consult the Which Simulator Should I Use? page."
 },
 
 {
@@ -245,7 +245,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Stepping through",
     "title": "Stepping through",
     "category": "section",
-    "text": "The stepthrough function exposes a simulation as an iterator so that the steps can be iterated through with a for loop syntax as follows:pomdp = BabyPOMDP()\npolicy = RandomPolicy(pomdp)\n\nfor (s, a, o, r) in stepthrough(pomdp, policy, \"s,a,o,r\", max_steps=10)\n    println(\"in state $s\")\n    println(\"took action $o\")\n    println(\"received observation $o and reward $r\")\nendstepthroughThe StepSimulator contained in this file can provide the same functionality with the following syntax:sim = StepSimulator(\"s,a,r,sp\")\nfor (s,a,r,sp) in simulate(sim, problem, policy)\n# do something\nend"
+    "text": "The stepthrough function exposes a simulation as an iterator so that the steps can be iterated through with a for loop syntax as follows:pomdp = BabyPOMDP()\npolicy = RandomPolicy(pomdp)\n\nfor (s, a, o, r) in stepthrough(pomdp, policy, \"s,a,o,r\", max_steps=10)\n    println(\"in state $s\")\n    println(\"took action $o\")\n    println(\"received observation $o and reward $r\")\nendstepthroughThe StepSimulator contained in this file can provide the same functionality with the following syntax:sim = StepSimulator(\"s,a,r,sp\")\nfor (s,a,r,sp) in simulate(sim, problem, policy)\n    # do something\nend"
 },
 
 {
