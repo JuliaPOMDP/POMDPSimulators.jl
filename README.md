@@ -6,9 +6,9 @@
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliapomdp.github.io/POMDPSimulators.jl/stable)
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://juliapomdp.github.io/POMDPSimulators.jl/latest)
 
-This package contains several simulators for POMDPs.jl. Please see the documentation: https://juliapomdp.github.io/POMDPSimulators.jl/stable
+This package contains several simulators for POMDPs.jl. Please see the documentation: https://juliapomdp.github.io/POMDPSimulators.jl/latest
 
-To decide which simulator to use, 
+To decide which simulator to use, see [Which simulator should I use?](https://juliapomdp.github.io/POMDPSimulators.jl/latest/which.html#Which-Simulator-Should-I-Use?-1)
 
 ## Installation
 
