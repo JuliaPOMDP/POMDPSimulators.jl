@@ -2,6 +2,9 @@
 # maintained by @zsunberg
 
 """
+    RolloutSimulator(rng, max_steps)
+    RolloutSimulator(; <keyword arguments>)
+
 A fast simulator that just returns the reward
 
 The simulation will be terminated when either
@@ -9,13 +12,17 @@ The simulation will be terminated when either
 2) the discount factor is as small as `eps` or
 3) max_steps have been executed
 
-Keyword Arguments:
-    - eps
-    - max_steps
+# Keyword arguments:
+- rng: A random number generator to use.
+- eps: A small number; if γᵗ where γ is the discount factor and t is the time step becomes smaller than this, the simulation will be terminated.
+- max_steps: The maximum number of steps to simulate.
 
-Usage (optional arguments in brackets):
+# Usage (optional arguments in brackets):
+
     ro = RolloutSimulator()
     history = simulate(ro, pomdp, policy, [updater [, init_belief [, init_state]]])
+
+See also: [`HistoryRecorder`](@ref), [`run_parallel`](@ref)
 """
 struct RolloutSimulator{RNG<:AbstractRNG} <: Simulator
     rng::RNG
@@ -26,7 +33,7 @@ struct RolloutSimulator{RNG<:AbstractRNG} <: Simulator
 end
 
 RolloutSimulator(rng::AbstractRNG, d::Int=typemax(Int)) = RolloutSimulator(rng, d, nothing)
-function RolloutSimulator(;rng=MersenneTwister(rand(UInt32)),
+function RolloutSimulator(;rng=Random.GLOBAL_RNG,
                            eps=nothing,
                            max_steps=nothing)
     return RolloutSimulator{typeof(rng)}(rng, max_steps, eps)
