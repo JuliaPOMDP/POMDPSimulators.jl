@@ -11,8 +11,6 @@ end
 ```
 This allows a flexible and general way to interact with a POMDP environment without creating new `Policy` types.
 
-Note: by default, since there is no observation before the first action, on the first call to the `do` block, `obs` is `nothing`.
-
 More examples can be found in the [POMDPExamples Package](https://github.com/JuliaPOMDP/POMDPExamples.jl/blob/master/notebooks/Running-Simulations.ipynb)
 
 ```@docs
