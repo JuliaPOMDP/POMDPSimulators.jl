@@ -12,6 +12,8 @@ policy = RandomPolicy(mdp)
 r = simulate(rs, mdp, policy)
 ```
 
+More examples can be found in the [POMDPExamples Package](https://github.com/JuliaPOMDP/POMDPExamples.jl/blob/master/notebooks/Running-Simulations.ipynb)
+
 ```@docs
 RolloutSimulator
 ```

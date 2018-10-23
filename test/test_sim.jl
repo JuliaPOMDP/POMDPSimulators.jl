@@ -12,7 +12,7 @@ end
 
 @testset "BabyPOMDP sim" begin 
     pomdp = BabyPOMDP()
-    hist = sim(pomdp, max_steps=100) do obs
+    hist = sim(pomdp, max_steps=100, initialobs=false) do obs
         @assert isa(obs, Bool)
         acts = actions(pomdp)
         return rand(acts)
@@ -20,16 +20,21 @@ end
     @test length(hist) == 100
 
     hist = sim(pomdp, false, max_steps=100) do obs
-        @assert isa(obs, Bool)
         acts = actions(pomdp)
         return rand(acts)
     end
     @test length(hist) == 100
 
     hist = sim(pomdp, initialstate=true, max_steps=100) do obs
-        @assert isa(obs, Bool)
         acts = actions(pomdp)
         return rand(acts)
     end
     @test length(hist) == 100
+
+    hist = sim(pomdp, max_steps=100, DiscreteUpdater(pomdp)) do b
+        @assert isa(b, DiscreteBelief)
+        acts = actions(pomdp)
+        return rand(acts)
+    end
+
 end

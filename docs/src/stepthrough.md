@@ -13,6 +13,8 @@ for (s, a, o, r) in stepthrough(pomdp, policy, "s,a,o,r", max_steps=10)
 end
 ```
 
+More examples can be found in the [POMDPExamples Package](https://github.com/JuliaPOMDP/POMDPExamples.jl/blob/master/notebooks/Running-Simulations.ipynb).
+
 ```@docs
 stepthrough
 ```
