@@ -30,4 +30,11 @@ end
         return rand(acts)
     end
     @test length(hist) == 100
+
+    hist = sim(pomdp, max_steps=100, DiscreteUpdater(pomdp)) do b
+        @assert isa(b, DiscreteBelief)
+        acts = actions(pomdp)
+        return rand(acts)
+    end
+
 end

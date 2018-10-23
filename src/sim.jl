@@ -18,13 +18,20 @@ Alternative way of running a simulation with a function specifying how to calcul
 for an MDP or
 
     sim(pomdp) do o
-        # code that does belief updates with observation `o` and calculates `a`
-        # you can also do other things like display something
-        # by default the initial `o` is the initial state distribution
+        # code that calculates 'a' based on observation `o`
+        # optionally you could save 'o' in a global variable or do a belief update
         return a
     end
 
-for a POMDP.
+or with a POMDP
+    
+    sim(pomdp, updater) do b
+        # code that calculates 'a' based on belief `b`
+        # `b` is calculated by `updater`
+        return a
+    end
+
+for a POMDP and a belief updater.
 
 # Keyword Arguments
 
@@ -39,10 +46,13 @@ for a POMDP.
   ```
   will limit the simulation to 100 steps.
 
-## POMDP Version
+## POMDP version
 
-- `initialobs`: this will control the initial observation given to the policy function. If this is not defined the following defaults be used if available (1) `initialstate_distribution(m)`, (2) `generate_o(m, sp, rng)`, (3) `missing`.
-- `updater`: if provided, this updater will be used to update the belief, and the belief will be used as the argument to the policy function.
+- `initialobs`: this will control the initial observation given to the policy function. If this is not defined, `generate_o(m, s, rng)` will be used if it is available. If it is not, `missing` will be used.
+
+## POMDP and updater version
+
+- `initialbelief`: `initialize_belief(updater, initialbelief)` is the first belief that will be given to the policy function.
 """
 function sim end
 
@@ -67,7 +77,6 @@ function sim(polfunc::Function, pomdp::POMDP;
              initialstate=nothing,
              simulator=nothing,
              initialobs=nothing,
-             updater=nothing,
              kwargs...
             )
 
@@ -78,9 +87,7 @@ function sim(polfunc::Function, pomdp::POMDP;
     if simulator==nothing
         simulator = HistoryRecorder(;kwargd...)
     end
-    if updater==nothing
-        updater = PreviousObservationUpdater()
-    end
+    updater = PreviousObservationUpdater()
     if initialobs==nothing && obstype(pomdp) != Nothing
         initialobs = default_init_obs(pomdp, initialstate)
     end
@@ -88,10 +95,26 @@ function sim(polfunc::Function, pomdp::POMDP;
     simulate(simulator, pomdp, policy, updater, initialobs, initialstate)
 end
 
+function sim(polfunc::Function, pomdp::POMDP, updater::Updater;
+             initialstate=nothing,
+             simulator=nothing,
+             initialbelief=initialstate_distribution(pomdp),
+             kwargs...
+            )
+
+    kwargd = Dict(kwargs)
+    if initialstate==nothing && statetype(pomdp) != Nothing
+        initialstate = default_init_state(pomdp)
+    end
+    if simulator==nothing
+        simulator = HistoryRecorder(;kwargd...)
+    end
+    policy = FunctionPolicy(polfunc)
+    simulate(simulator, pomdp, policy, updater, initialbelief, initialstate)
+end
+
 function default_init_obs(p::POMDP, s)
-    if implemented(initialstate_distribution, Tuple{typeof(p)})
-        return initialstate_distribution(p)
-    elseif implemented(generate_o, Tuple{typeof(p), typeof(s), typeof(Random.GLOBAL_RNG)})
+    if implemented(generate_o, Tuple{typeof(p), typeof(s), typeof(Random.GLOBAL_RNG)})
         return generate_o(p, s, Random.GLOBAL_RNG)
     else
         return missing
@@ -106,7 +129,7 @@ end
             error("""
                   Error in sim(::$(typeof(p))): No initial state specified.
                   
-                  Please supply it as an argument after the mdp or define the method POMDPs.initialstate(::$(typeof(p)), ::$(typeof(Random.GLOBAL_RNG))) or define the method POMDPs.initialstate_distribution(::$(typeof(p))).
+                  Please supply it as a keyword argument or define the method POMDPs.initialstate(::$(typeof(p)), ::$(typeof(Random.GLOBAL_RNG))) or define the method POMDPs.initialstate_distribution(::$(typeof(p))).
 
                   """)
         end
