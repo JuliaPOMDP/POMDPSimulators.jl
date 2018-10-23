@@ -77,7 +77,7 @@ var documenterSearchIndex = {"docs": [
     "page": "History Recorder",
     "title": "History Recorder",
     "category": "section",
-    "text": "A HistoryRecorder runs a simulation and records the trajectory. It returns a history record (MDPHistory or POMDPHistory).hr = HistoryRecorder(max_steps=100)\npomdp = TigerPOMDP()\npolicy = RandomPolicy(pomdp)\n\nh = simulate(hr, pomdp, policy)HistoryRecorder"
+    "text": "A HistoryRecorder runs a simulation and records the trajectory. It returns a history record (MDPHistory or POMDPHistory).hr = HistoryRecorder(max_steps=100)\npomdp = TigerPOMDP()\npolicy = RandomPolicy(pomdp)\n\nh = simulate(hr, pomdp, policy)More examples can be found in the POMDPExamples Package.HistoryRecorder"
 },
 
 {
@@ -93,7 +93,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "Home",
     "category": "section",
-    "text": "POMDPSimulators is a collection of utilities for simulating POMDPs.jl models. [TODO: add link to standard]If you are just getting started, probably the easiest way to begin is the stepthrough function. Otherwise, consult the Which Simulator Should I Use? page."
+    "text": "POMDPSimulators is a collection of utilities for simulating POMDPs.jl models. All of the simulators in this package should conform to the POMDPs.jl Simulation Standard.Examples can be found in the simulation tutorial in the POMDPExamples package.If you are just getting started, probably the easiest way to begin is the stepthrough function. Otherwise, consult the Which Simulator Should I Use? page."
 },
 
 {
@@ -125,7 +125,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Parallel",
     "title": "Example",
     "category": "section",
-    "text": "using POMDPModels\nusing POMDPPolicies\nusing POMDPSimulators\n\npomdp = BabyPOMDP()\nfwc = FeedWhenCrying()\nrnd = solve(RandomSolver(MersenneTwister(7)), pomdp)\n\nq = [] # vector of the simulations to be run\npush!(q, Sim(pomdp, fwc, max_steps=32, rng=MersenneTwister(4), metadata=Dict(:policy=>\"feed when crying\")))\npush!(q, Sim(pomdp, rnd, max_steps=32, rng=MersenneTwister(4), metadata=Dict(:policy=>\"random\")))\n\n# this creates two simulations, one with the feed-when-crying policy and one with a random policy\n\ndata = run_parallel(q)\n\n# by default, the dataframe output contains the reward and the contents of `metadata`\n@show data\n# data = 2×2 DataFrames.DataFrame\n# │ Row │ policy             │ reward   │\n# ├─────┼────────────────────┼──────────┤\n# │ 1   │ \"feed when crying\" │ -4.5874  │\n# │ 2   │ \"random\"           │ -27.4139 │\n\n# to perform additional analysis on each of the simulations one can define a processing function with the `do` syntax:\ndata2 = run_parallel(q, progress=false) do sim, hist\nprintln(\"finished a simulation - final state was $(last(state_hist(hist)))\")\nreturn [:steps=>n_steps(hist), :reward=>discounted_reward(hist)]\nend\n\n@show data2\n# 2×3 DataFrames.DataFrame\n# │ Row │ policy             │ reward   │ steps │\n# ├─────┼────────────────────┼──────────┼───────┤\n# │ 1   │ \"feed when crying\" │ -18.2874 │ 32.0  │\n# │ 2   │ \"random\"           │ -17.7054 │ 32.0  │\n"
+    "text": "Examples can be found in the POMDPExamples Package"
 },
 
 {
@@ -197,7 +197,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Rollout",
     "title": "RolloutSimulator",
     "category": "section",
-    "text": "RolloutSimulator is the simplest MDP or POMDP simulator. When simulate is called, it simply simulates a single trajectory of the process and returns the discounted reward.rs = RolloutSimulator()\nmdp = GridWorld()\npolicy = RandomPolicy(mdp)\n\nr = simulate(rs, mdp, policy)RolloutSimulator"
+    "text": "RolloutSimulator is the simplest MDP or POMDP simulator. When simulate is called, it simply simulates a single trajectory of the process and returns the discounted reward.rs = RolloutSimulator()\nmdp = GridWorld()\npolicy = RandomPolicy(mdp)\n\nr = simulate(rs, mdp, policy)More examples can be found in the POMDPExamples PackageRolloutSimulator"
 },
 
 {
@@ -213,7 +213,7 @@ var documenterSearchIndex = {"docs": [
     "page": "sim()",
     "title": "POMDPSimulators.sim",
     "category": "function",
-    "text": "sim(polfunc::Function, mdp::MDP[, initial_state]; [kwargs...])\nsim(polfunc::Function, pomdp::POMDP[, initial_state])\n\nAlternative way of running a simulation with a function specifying how to calculate the action at each timestep.\n\nUsage\n\nsim(mdp) do s\n    # code that calculates action `a` based on `s` - this is the policy\n    # you can also do other things like display something\n    return a\nend\n\nfor an MDP or\n\nsim(pomdp) do o\n    # code that does belief updates with observation `o` and calculates `a`\n    # you can also do other things like display something\n    return a\nend\n\nfor a POMDP.\n\nKeyword Arguments\n\nUse the simulator keyword argument to specify any simulator to run the simulation. If nothing is specified for the simulator, a HistoryRecorder will be used as the simulator, with all keyword arguments forwarded to it, e.g.\n\nsim(mdp, max_steps=100, show_progress=true) do s\n    # ...\nend\n\nwill limit the simulation to 100 steps.\n\nThe POMDP version also has two additional keyword arguments:\n\ninitialobs: this will control the initial observation given to the policy function.\nupdater: if provided, this updater will be used to update the belief, and the belief will be used as the argument to the policy function. If a custom updater is provided, the initialobs keyword argument should be used to specify the initial belief.\n\n\n\n\n\n"
+    "text": "sim(polfunc::Function, mdp::MDP; [<keyword arguments>])\nsim(polfunc::Function, pomdp::POMDP; [<keyword arguments>])\n\nAlternative way of running a simulation with a function specifying how to calculate the action at each timestep.\n\nUsage\n\nsim(mdp) do s\n    # code that calculates action `a` based on `s` - this is the policy\n    # you can also do other things like display something\n    return a\nend\n\nfor an MDP or\n\nsim(pomdp) do o\n    # code that calculates \'a\' based on observation `o`\n    # optionally you could save \'o\' in a global variable or do a belief update\n    return a\nend\n\nor with a POMDP\n\nsim(pomdp, updater) do b\n    # code that calculates \'a\' based on belief `b`\n    # `b` is calculated by `updater`\n    return a\nend\n\nfor a POMDP and a belief updater.\n\nKeyword Arguments\n\nAll Versions\n\ninitialstate: the initial state for the simulation\nsimulator: keyword argument to specify any simulator to run the simulation. If nothing is specified for the simulator, a HistoryRecorder will be used as the simulator, with all keyword arguments forwarded to it, e.g.\nsim(mdp, max_steps=100, show_progress=true) do s\n    # ...\nend\nwill limit the simulation to 100 steps.\n\nPOMDP version\n\ninitialobs: this will control the initial observation given to the policy function. If this is not defined, generate_o(m, s, rng) will be used if it is available. If it is not, missing will be used.\n\nPOMDP and updater version\n\ninitialbelief: initialize_belief(updater, initialbelief) is the first belief that will be given to the policy function.\n\n\n\n\n\n"
 },
 
 {
@@ -221,7 +221,7 @@ var documenterSearchIndex = {"docs": [
     "page": "sim()",
     "title": "sim()",
     "category": "section",
-    "text": "The sim function provides a convenient way to interact with a POMDP or MDP environment and return a history. The first argument is a function that is called at every time step and takes a state (in the case of an MDP) or an observation (in the case of a POMDP) as the argument and then returns an action. The second argument is a pomdp or mdp. It is intended to be used with Julia\'s do syntax as follows:pomdp = TigerPOMDP()\nhistory = sim(pomdp, max_steps=10) do obs\n    println(\"Observation was $obs.\")\n    return TIGER_OPEN_LEFT\nendThis allows a flexible and general way to interact with a POMDP environment without creating new Policy types.Note: by default, since there is no observation before the first action, on the first call to the do block, obs is nothing.sim"
+    "text": "The sim function provides a convenient way to interact with a POMDP or MDP environment and return a history. The first argument is a function that is called at every time step and takes a state (in the case of an MDP) or an observation (in the case of a POMDP) as the argument and then returns an action. The second argument is a pomdp or mdp. It is intended to be used with Julia\'s do syntax as follows:pomdp = TigerPOMDP()\nhistory = sim(pomdp, max_steps=10) do obs\n    println(\"Observation was $obs.\")\n    return TIGER_OPEN_LEFT\nendThis allows a flexible and general way to interact with a POMDP environment without creating new Policy types.In the POMDP case, an updater can optionally be supplied as an additional positional argument if the policy function works with beliefs rather than directly with observations.More examples can be found in the POMDPExamples Packagesim"
 },
 
 {
@@ -245,7 +245,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Stepping through",
     "title": "Stepping through",
     "category": "section",
-    "text": "The stepthrough function exposes a simulation as an iterator so that the steps can be iterated through with a for loop syntax as follows:pomdp = BabyPOMDP()\npolicy = RandomPolicy(pomdp)\n\nfor (s, a, o, r) in stepthrough(pomdp, policy, \"s,a,o,r\", max_steps=10)\n    println(\"in state $s\")\n    println(\"took action $o\")\n    println(\"received observation $o and reward $r\")\nendstepthroughThe StepSimulator contained in this file can provide the same functionality with the following syntax:sim = StepSimulator(\"s,a,r,sp\")\nfor (s,a,r,sp) in simulate(sim, problem, policy)\n    # do something\nend"
+    "text": "The stepthrough function exposes a simulation as an iterator so that the steps can be iterated through with a for loop syntax as follows:pomdp = BabyPOMDP()\npolicy = RandomPolicy(pomdp)\n\nfor (s, a, o, r) in stepthrough(pomdp, policy, \"s,a,o,r\", max_steps=10)\n    println(\"in state $s\")\n    println(\"took action $o\")\n    println(\"received observation $o and reward $r\")\nendMore examples can be found in the POMDPExamples Package.stepthroughThe StepSimulator contained in this file can provide the same functionality with the following syntax:sim = StepSimulator(\"s,a,r,sp\")\nfor (s,a,r,sp) in simulate(sim, problem, policy)\n    # do something\nend"
 },
 
 {
