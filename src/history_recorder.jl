@@ -207,9 +207,12 @@ function simulate(sim::HistoryRecorder,
     backtrace = nothing
 
     if sim.show_progress
+        if (sim.max_steps == nothing) && (sim.eps == nothing)
+            error("If show_progress=true in a HistoryRecorder, you must also specify max_steps or eps.")
+        end
         prog = Progress(max_steps, "Simulating..." )
     end
-
+    
     push!(sh, init_state)
 
     disc = 1.0
