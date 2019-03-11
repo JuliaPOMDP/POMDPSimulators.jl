@@ -104,6 +104,11 @@ tuples = collect(eachstep(hv, "r,sp,s,a,t"))
 
 @test collect(eachstep(hv, "r")) == reward_hist(hv)
 
+# test showprogress without max_steps
+gw = SimpleGridWorld()
+hr = HistoryRecorder(show_progress=true)
+@test_throws ErrorException simulate(hr, gw, FunctionPolicy(s->:left), initialstate(gw, sim.rng))
+
 #=
 function f(hv)
     rs = 0.0
