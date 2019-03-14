@@ -128,7 +128,9 @@ function run_parallel(process::Function, queue::AbstractVector, pool::AbstractWo
              """)
     end
 
-    frame_lines = progress_pmap(pool, queue) do sim
+    map_fun = progress isa Progress ? progress_pmap : pmap
+
+    frame_lines = map_fun(pool, queue) do sim
         result = simulate(sim)
         output = process(sim, result)
         return merge(sim.metadata, output)
