@@ -74,7 +74,7 @@ function Sim(mdp::MDP,
             )
 
     if initialstate == nothing && statetype(mdp) != Nothing
-        is = POMDPs.initialstate(mdp, rng) 
+        is = POMDPs.initialstate(mdp, rng)
     else
         is = initialstate
     end
@@ -114,62 +114,24 @@ end
 ```
 will return a dataframe with with the number of steps and the reward in it.
 """
-function run_parallel(process::Function, queue::AbstractVector;
+function run_parallel(process::Function, queue::AbstractVector, pool::AbstractWorkerPool=default_worker_pool();
                       progress=Progress(length(queue), desc="Simulating..."),
                       proc_warn=true)
 
-    #=
-    frame_lines = pmap(progress, queue) do sim
-        result = simulate(sim)
-        return process(sim, result)
-    end
-    =#
-
-    np = nprocs()
-    if np == 1 && proc_warn
+    if nworkers(pool) == 1 && proc_warn
         @warn("""
-             run_parallel(...) was started with only 1 process, so simulations will be run in serial. 
+             run_parallel(...) was started with only 1 worker in the pool, so simulations will be run in serial.
 
              To supress this warning, use run_parallel(..., proc_warn=false).
 
-             To use multiple processes, use addprocs() or the -p option (e.g. julia -p 4).
+             To use multiple processes, use addprocs() or the -p option (e.g. julia -p 4) and make sure the correct worker pool is assigned to argument `pool` in the call to run_parallel.
              """)
     end
-    n = length(queue)
-    i = 1
-    prog = 0
-    # based on the simple implementation of pmap here: https://docs.julialang.org/en/latest/manual/parallel-computing
-    frame_lines = Vector{Any}(missing, n)
-    nextidx() = (idx=i; i+=1; idx)
-    prog_lock = ReentrantLock()
-    @sync begin 
-        for p in 1:np
-            if np == 1 || p != myid()
-                @async begin
-                    while true
-                        idx = nextidx()
-                        if idx > n
-                            break
-                        end
-                        frame_lines[idx] = remotecall_fetch(p, queue[idx]) do sim
-                            result = simulate(sim)
-                            output = process(sim, result)
-                            return merge(sim.metadata, output)
-                        end
-                        if progress isa Progress
-                            lock(prog_lock)
-                            update!(progress, prog+=1)
-                            unlock(prog_lock)
-                        end
-                    end
-                end
-            end
-        end
-    end
-    if progress isa Progress
-        lock(prog_lock)
-        finish!(progress)
-        unlock(prog_lock)
+
+    frame_lines = progress_pmap(pool, queue) do sim
+        result = simulate(sim)
+        output = process(sim, result)
+        return merge(sim.metadata, output)
     end
 
     return create_dataframe(frame_lines)
