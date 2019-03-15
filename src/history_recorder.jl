@@ -82,7 +82,7 @@ function simulate(sim::HistoryRecorder,
                            policy::Policy,
                            bu::Updater,
                            initialstate_dist::Any,
-                           initialstate::Any=get_initialstate(sim, initialstate_dist)
+                           is::Any=initialstate(pomdp, sim.rng)
                   ) where {S,A,O}
 
     initial_belief = initialize_belief(bu, initialstate_dist)
@@ -112,7 +112,7 @@ function simulate(sim::HistoryRecorder,
     exception = nothing
     backtrace = nothing
 
-    push!(sh, initialstate)
+    push!(sh, is)
     push!(bh, initial_belief)
 
     if sim.show_progress
@@ -181,7 +181,7 @@ end
 
 function simulate(sim::HistoryRecorder,
                   mdp::MDP{S,A}, policy::Policy,
-                  init_state::S=get_initialstate(sim, mdp)) where {S,A}
+                  init_state::S=initialstate(mdp, sim.rng)) where {S,A}
     
     if sim.max_steps == nothing
         max_steps = typemax(Int)
@@ -253,13 +253,13 @@ function simulate(sim::HistoryRecorder,
     return MDPHistory(sh, ah, rh, ih, aih, discount(mdp), exception, backtrace)
 end
 
-function get_initialstate(sim::Simulator, initialstate_dist)
-    return rand(sim.rng, initialstate_dist)
-end
-
-function get_initialstate(sim::Simulator, mdp::Union{MDP,POMDP})
-    return initialstate(mdp, sim.rng)
-end
+# function get_initialstate(sim::Simulator, initialstate_dist)
+#     return rand(sim.rng, initialstate_dist)
+# end
+# 
+# function get_initialstate(sim::Simulator, mdp::Union{MDP,POMDP})
+#     return initialstate(mdp, sim.rng)
+# end
 
 # this is kind of a hack in cases where the belief isn't stable
 push_belief(bh::Vector{T}, b::T) where T = push!(bh, b)
