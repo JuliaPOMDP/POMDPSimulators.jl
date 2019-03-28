@@ -10,12 +10,12 @@ let
     push!(q, Sim(pomdp, fwc, max_steps=32, rng=MersenneTwister(4), metadata=Dict(:policy=>"feed when crying")))
     push!(q, Sim(pomdp, rnd, max_steps=32, rng=MersenneTwister(4), metadata=(policy="random",)))
 
-    @test_logs (:warn,) run_parallel(q, progress=nothing)
+    @test_logs (:warn,) run_parallel(q, show_progress=false)
 
     procs = addprocs(2)
     @everywhere using POMDPSimulators
     @everywhere using POMDPModels
-    @test_nowarn @show run_parallel(q, progress=nothing) do sim, hist
+    @test_nowarn @show run_parallel(q, show_progress=false) do sim, hist
         return (steps=n_steps(hist), reward=discounted_reward(hist))
     end
 
@@ -56,7 +56,7 @@ let
     # │ 2   │ "random"           │ -27.4139 │
 
     # to perform additional analysis on each of the simulations one can define a processing function with the `do` syntax:
-    data2 = run_parallel(q, progress=false) do sim, hist
+    data2 = run_parallel(q, show_progress=false) do sim, hist
         println("finished a simulation - final state was $(last(state_hist(hist)))")
         return (steps=n_steps(hist), reward=discounted_reward(hist))
     end

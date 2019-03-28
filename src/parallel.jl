@@ -116,7 +116,7 @@ will return a dataframe with with the number of steps and the reward in it.
 """
 function run_parallel(process::Function, queue::AbstractVector, pool::AbstractWorkerPool=default_worker_pool();
                       progress=Progress(length(queue), desc="Simulating..."),
-                      proc_warn=true)
+                      proc_warn::Bool=true, show_progress::Bool=true)
 
     if nworkers(pool) == 1 && proc_warn
         @warn("""
@@ -128,9 +128,10 @@ function run_parallel(process::Function, queue::AbstractVector, pool::AbstractWo
              """)
     end
 
-    map_fun = progress isa Progress ? progress_pmap : pmap
+    map_function = (args...) -> (show_progress ?
+                                 progress_pmap(args..., progress=progress) : pmap(args...))
 
-    frame_lines = map_fun(pool, queue) do sim
+    frame_lines = map_function(pool, queue) do sim
         result = simulate(sim)
         output = process(sim, result)
         return merge(sim.metadata, output)
