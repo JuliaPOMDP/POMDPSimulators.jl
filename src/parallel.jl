@@ -127,6 +127,11 @@ function run_parallel(process::Function, queue::AbstractVector, pool::AbstractWo
              To use multiple processes, use addprocs() or the -p option (e.g. julia -p 4) and make sure the correct worker pool is assigned to argument `pool` in the call to run_parallel.
              """)
     end
+    
+    if progress in (nothing, false)
+        @warn("run_parallel(..., progress=$progress) is deprecated. Use run_parallel(..., show_progress=false) instead.")
+        show_progress = Bool
+    end
 
     map_function = (args...) -> (show_progress ?
                                  progress_pmap(args..., progress=progress) : pmap(args...))
