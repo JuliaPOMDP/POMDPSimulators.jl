@@ -129,7 +129,8 @@ function run_parallel(process::Function, queue::AbstractVector, pool::AbstractWo
     end
     
     if progress in (nothing, false)
-        @warn("run_parallel(..., progress=$progress) is deprecated. Use run_parallel(..., show_progress=false) instead.")
+        progstr = progress == nothing ? "nothing" : "false"
+        @warn("run_parallel(..., progress=$progstr) is deprecated. Use run_parallel(..., show_progress=false) instead.")
         show_progress = Bool
     end
 
