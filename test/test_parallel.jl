@@ -15,6 +15,10 @@ let
     procs = addprocs(2)
     @everywhere using POMDPSimulators
     @everywhere using POMDPModels
+    
+    # test progress=nothing deprecation
+    @test_logs (:warn,) run_parallel(q, progress=nothing)
+    
     @test_nowarn @show run_parallel(q, show_progress=false) do sim, hist
         return (steps=n_steps(hist), reward=discounted_reward(hist))
     end
