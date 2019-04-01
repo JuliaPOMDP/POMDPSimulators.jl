@@ -103,7 +103,8 @@ By default, the `DataFrame` will contain the reward for each simulation and the 
 This function should take two arguments, (1) the `Sim` that was executed and (2) the result of the simulation, by default a `SimHistory`. It should return a named tuple that will appear in the dataframe. See Examples below.
 
 ## Keyword Arguments
-- `progress`: a `ProgressMeter.Progress` for showing progress through the simulations; `progress=false` will suppress the progress meter
+- `show_progress::Bool`: whether or not to show a progress meter
+- `progress::ProgressMeter.Progress`: determines how the progress meter is displayed
 
 # Examples
 
@@ -129,13 +130,13 @@ function run_parallel(process::Function, queue::AbstractVector, pool::AbstractWo
     end
     
     if progress in (nothing, false)
-        progstr = progress == nothing ? "nothing" : "false"
+        progstr = (progress == nothing) ? "nothing" : "false"
         @warn("run_parallel(..., progress=$progstr) is deprecated. Use run_parallel(..., show_progress=false) instead.")
-        show_progress = Bool
+        show_progress = false
     end
 
-    map_function = (args...) -> (show_progress ?
-                                 progress_pmap(args..., progress=progress) : pmap(args...))
+    map_function(args...) = (show_progress ?
+                             progress_pmap(args..., progress=progress) : pmap(args...))
 
     frame_lines = map_function(pool, queue) do sim
         result = simulate(sim)
