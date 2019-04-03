@@ -74,7 +74,7 @@ function Sim(mdp::MDP,
             )
 
     if initialstate == nothing && statetype(mdp) != Nothing
-        is = POMDPs.initialstate(mdp, rng) 
+        is = POMDPs.initialstate(mdp, rng)
     else
         is = initialstate
     end
@@ -103,7 +103,8 @@ By default, the `DataFrame` will contain the reward for each simulation and the 
 This function should take two arguments, (1) the `Sim` that was executed and (2) the result of the simulation, by default a `SimHistory`. It should return a named tuple that will appear in the dataframe. See Examples below.
 
 ## Keyword Arguments
-- `progress`: a `ProgressMeter.Progress` for showing progress through the simulations; `progress=false` will suppress the progress meter
+- `show_progress::Bool`: whether or not to show a progress meter
+- `progress::ProgressMeter.Progress`: determines how the progress meter is displayed
 
 # Examples
 
@@ -114,62 +115,33 @@ end
 ```
 will return a dataframe with with the number of steps and the reward in it.
 """
-function run_parallel(process::Function, queue::AbstractVector;
+function run_parallel(process::Function, queue::AbstractVector, pool::AbstractWorkerPool=default_worker_pool();
                       progress=Progress(length(queue), desc="Simulating..."),
-                      proc_warn=true)
+                      proc_warn::Bool=true, show_progress::Bool=true)
 
-    #=
-    frame_lines = pmap(progress, queue) do sim
-        result = simulate(sim)
-        return process(sim, result)
-    end
-    =#
-
-    np = nprocs()
-    if np == 1 && proc_warn
+    if nworkers(pool) == 1 && proc_warn
         @warn("""
-             run_parallel(...) was started with only 1 process, so simulations will be run in serial. 
+             run_parallel(...) was started with only 1 worker in the pool, so simulations will be run in serial.
 
              To supress this warning, use run_parallel(..., proc_warn=false).
 
-             To use multiple processes, use addprocs() or the -p option (e.g. julia -p 4).
+             To use multiple processes, use addprocs() or the -p option (e.g. julia -p 4) and make sure the correct worker pool is assigned to argument `pool` in the call to run_parallel.
              """)
     end
-    n = length(queue)
-    i = 1
-    prog = 0
-    # based on the simple implementation of pmap here: https://docs.julialang.org/en/latest/manual/parallel-computing
-    frame_lines = Vector{Any}(missing, n)
-    nextidx() = (idx=i; i+=1; idx)
-    prog_lock = ReentrantLock()
-    @sync begin 
-        for p in 1:np
-            if np == 1 || p != myid()
-                @async begin
-                    while true
-                        idx = nextidx()
-                        if idx > n
-                            break
-                        end
-                        frame_lines[idx] = remotecall_fetch(p, queue[idx]) do sim
-                            result = simulate(sim)
-                            output = process(sim, result)
-                            return merge(sim.metadata, output)
-                        end
-                        if progress isa Progress
-                            lock(prog_lock)
-                            update!(progress, prog+=1)
-                            unlock(prog_lock)
-                        end
-                    end
-                end
-            end
-        end
+    
+    if progress in (nothing, false)
+        progstr = (progress == nothing) ? "nothing" : "false"
+        @warn("run_parallel(..., progress=$progstr) is deprecated. Use run_parallel(..., show_progress=false) instead.")
+        show_progress = false
     end
-    if progress isa Progress
-        lock(prog_lock)
-        finish!(progress)
-        unlock(prog_lock)
+
+    map_function(args...) = (show_progress ?
+                             progress_pmap(args..., progress=progress) : pmap(args...))
+
+    frame_lines = map_function(pool, queue) do sim
+        result = simulate(sim)
+        output = process(sim, result)
+        return merge(sim.metadata, output)
     end
 
     return create_dataframe(frame_lines)
