@@ -33,13 +33,19 @@ r2 = simulate(sim, problem, policy)
 @test length(collect(r1)) == n_steps(r1)
 @test length(collect(r2)) == n_steps(r2)
 
+display(r1)
+println()
+
 for tuple in r1
-    length(tuple) == 6
+    length(tuple) == length(POMDPSimulators.COMPLETE_POMDP_STEP)
 end
 
 for ui in eachstep(r2, "ui")
     @test ui == nothing
 end
+
+@test r1[1] == first(r1)
+@test r1[end] == last(r1)
 
 # test that complete step is returned
 step = first(eachstep(r2))
@@ -58,8 +64,10 @@ r1 = simulate(sim, problem, policy, initialstate(problem, sim.rng))
 @test length(action_hist(r1)) <= steps
 @test length(reward_hist(r1)) <= steps
 
+@test r1[end] == last(r1)
+@test r1[1] == first(r1)
 for tuple in r1
-    @test length(tuple) == 4
+    @test length(tuple) == length(POMDPSimulators.COMPLETE_MDP_STEP)
     @test isa(tuple[1], statetype(problem))
     @test isa(tuple[2], actiontype(problem))
     @test isa(tuple[3], Float64)
@@ -69,6 +77,9 @@ for tuple in r1
     @test isa(tuple.r, Float64)
     @test isa(tuple.sp, statetype(problem))
 end
+
+display(r1)
+println()
 
 @test length(collect(r1)) == n_steps(r1)
 
