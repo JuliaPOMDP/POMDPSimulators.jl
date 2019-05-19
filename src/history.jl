@@ -17,13 +17,19 @@ nt_type(::Type{H}) where H<:SimHistory{NT} where NT = NT
 nt_type(h::SimHistory) = nt_type(typeof(h))
 
 """
-An object that contains a MDP simulation history
+    MDPHistory
 
-Returned by simulate when called with a HistoryRecorder. Iterate through the (s, a, r, s') tuples in MDPHistory h like this:
+An MDP simulation history returned by `simulate(::HistoryRecorder, ::MDP,...)`.
 
-    for (s, a, r, sp) in eachstep(h)
-        # do something
-    end
+This is an `AbstractVector` of `NamedTuples` containing the states, actions, etc.
+
+# Examples
+```
+hist[1][:s] # returns the first state in the history
+```
+```
+hist[:a] # returns all of the actions in the history
+```
 """
 struct MDPHistory{S,A} <: AbstractMDPHistory{S,A}
     state_hist::Vector{S}
@@ -40,13 +46,20 @@ struct MDPHistory{S,A} <: AbstractMDPHistory{S,A}
 end
 
 """
-An object that contains a POMDP simulation history
+    POMDPHistory
 
-Returned by simulate when called with a HistoryRecorder. Iterate through the (s, b, a, r, s', o) tuples in POMDPHistory h like this:
+An POMDP simulation history returned by `simulate(::HistoryRecorder, ::POMDP,...)`.
 
-    for (s, b, a, r, sp, o) in eachstep(h, "s,b,a,r,sp,o")
-        # do something
-    end
+This is an `AbstractVector` of `NamedTuples` containing the states, actions, etc.
+
+# Examples
+```
+hist[1][:s] # returns the first state in the history
+```
+```
+hist[:a] # returns all of the actions in the history
+```
+
 """
 struct POMDPHistory{S,A,O,B} <: AbstractPOMDPHistory{S,A,O,B}
     state_hist::Vector{S}
@@ -120,6 +133,35 @@ function Base.getindex(h::POMDPHistory, i::Int)
                        belief_hist(h)[i+1],
                        uinfo_hist(h)[i]
                       ))
+end
+
+function Base.getindex(h::SimHistory, s::Symbol)
+    if s == :s
+        return state_hist(h)[1:end-1]
+    elseif s == :a
+        return action_hist(h)
+    elseif s == :r
+        return reward_hist(h)
+    elseif s == :sp
+        return state_hist(h)[2:end]
+    elseif s == :t
+        return 1:n_steps(h)
+    elseif s == :i
+        return info_hist(h)
+    elseif s == :ai
+        return ainfo_hist(h)
+    elseif s == :b
+        return belief_hist(h)[1:n_steps(h)]
+    elseif s == :o
+        return observation_hist(h)
+    elseif s == :bp
+        if length(belief_hist(h)) < n_steps(h)+1
+            @warn("Requested :bp from a SimHistory, however bp was not calculated for the last step so a shortened vector will be returned.")
+        end
+        return belief_hist(h)[2:end]
+    elseif s == :ui
+        return uinfo_hist(h)
+    end
 end
 
 

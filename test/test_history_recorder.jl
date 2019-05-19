@@ -51,6 +51,7 @@ end
 step = first(eachstep(r2))
 for key in POMDPSimulators.COMPLETE_POMDP_STEP
     @test haskey(step, key)
+    @test first(r2[key]) == step[key]
 end
 
 problem = LegacyGridWorld()
@@ -80,6 +81,12 @@ end
 
 display(r1)
 println()
+
+step = first(eachstep(r1))
+for key in POMDPSimulators.COMPLETE_MDP_STEP
+    @test haskey(step, key)
+    @test first(r1[key]) == step[key]
+end
 
 @test length(collect(r1)) == n_steps(r1)
 
