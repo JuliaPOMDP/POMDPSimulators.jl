@@ -8,7 +8,7 @@
 
 This package contains several simulators for POMDPs.jl. Please see the documentation: https://juliapomdp.github.io/POMDPSimulators.jl/latest
 
-To decide which simulator to use, see [Which simulator should I use?](https://juliapomdp.github.io/POMDPSimulators.jl/latest/which.html#Which-Simulator-Should-I-Use?-1)
+To decide which simulator to use, see [Which simulator should I use?](https://juliapomdp.github.io/POMDPSimulators.jl/latest/which/)
 
 ## Installation
 
