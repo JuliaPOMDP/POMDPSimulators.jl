@@ -57,8 +57,10 @@ function Base.iterate(it::MDPSimIterator, is::Tuple{Int, S}=(1, it.init_state)) 
     t = is[1]
     s = is[2]
     a, ai = action_info(it.policy, s)
-    sp, r, i = generate_sri(it.mdp, s, a, it.rng)
-    return (out_tuple(it, (s, a, r, sp, t, i, ai)), (t+1, sp))
+    on = outputnames(DDNStructure(it.mdp))
+    out = gen(DDNOut(on), it.mdp, s, a, it.rng)
+    nt = merge(namedtuple(on, out), (t=t, s=s, a=a, ai=ai))
+    return (out_tuple(it, nt), (t+1, nt.sp))
 end
 
 struct POMDPSimIterator{SPEC, M<:POMDP, P<:Policy, U<:Updater, RNG<:AbstractRNG, B, S}
@@ -96,34 +98,36 @@ function Base.iterate(it::POMDPSimIterator, is::Tuple{Int,S,B} = (1, it.init_sta
     s = is[2]
     b = is[3]
     a, ai = action_info(it.policy, b)
-    sp, o, r, i = generate_sori(it.pomdp, s, a, it.rng)
-    bp, ui = update_info(it.updater, b, a, o)
-    return (out_tuple(it, (s, a, r, sp, t, i, ai, b, o, bp, ui)), (t+1, sp, bp))
+    on = outputnames(DDNStructure(it.pomdp))
+    out = gen(DDNOut(on), it.pomdp, s, a, it.rng)
+    outnt = namedtuple(on, out)
+    bp, ui = update_info(it.updater, b, a, outnt.o)
+    nt = merge(outnt, (t=t, b=b, s=s, a=a, ai=ai, bp=bp, ui=ui))
+    return (out_tuple(it, nt), (t+1, nt.sp, nt.bp))
 end
 
-const sym_to_ind = Dict(sym=>i for (i, sym) in enumerate(COMPLETE_POMDP_STEP))
-
-@generated function out_tuple(it::Union{MDPSimIterator, POMDPSimIterator}, all::Tuple)
+@generated function out_tuple(it::Union{MDPSimIterator, POMDPSimIterator}, all::NamedTuple)
     spec = it.parameters[1]     
     if isa(spec, Tuple)
-        calls = []
-        for sym in spec
-            push!(calls, :($sym = all[$(sym_to_ind[sym])]))
-        end
+        # calls = []
+        # for sym in spec
+        #     push!(calls, :($sym = all[$(Meta.quot(sym))]))
+        # end
 
-        return quote
-            return ($(calls...),)
-        end
-    else
+        # return quote
+        #     return ($(calls...),)
+        # end
+        return :(NamedTupleTools.select(all, $spec))
+    else 
         @assert isa(spec, Symbol) "Invalid specification: $spec is not a Symbol or Tuple."
         return quote
-            return all[$(sym_to_ind[spec])]
+            return all[$(Meta.quot(spec))]
         end
     end
 end
 
-convert_spec(spec, T::Type{POMDP}) = convert_spec(spec, Set(tuple(:sp, :bp, :s, :a, :r, :b, :o, :i, :ai, :ui, :t)))
-convert_spec(spec, T::Type{MDP}) = convert_spec(spec, Set(tuple(:sp, :s, :a, :r, :i, :ai, :t)))
+convert_spec(spec, T::Type{M}) where {M<:POMDP} = convert_spec(spec, union(Set(nodenames(DDNStructure(T))), Set(tuple(:bp, :b, :ai, :ui, :t))))
+convert_spec(spec, T::Type{M}) where {M<:MDP} = convert_spec(spec, union(Set(nodenames(DDNStructure(T))), Set(tuple(:ai, :t))))
 
 function convert_spec(spec, recognized::Set{Symbol})
     conv = convert_spec(spec)
@@ -156,6 +160,9 @@ end
 
 convert_spec(spec::Symbol) = spec
 
+default_spec(m::MDP) = tuple(nodenames(DDNStructure(m))..., :t, :ai)
+default_spec(m::POMDP) = tuple(nodenames(DDNStructure(m))..., :t, :ai, :b, :bp, :ui)
+
 """
     stepthrough(problem, policy, [spec])
     stepthrough(problem, policy, [spec], [rng=rng], [max_steps=max_steps])
@@ -181,7 +188,10 @@ Under the hood, this function creates a `StepSimulator` with `spec` and returns 
 """
 function stepthrough end # for documentation
 
-function stepthrough(mdp::MDP, policy::Policy, spec::Union{String, Tuple, Symbol}=COMPLETE_MDP_STEP; kwargs...)
+function stepthrough(mdp::MDP,
+                     policy::Policy,
+                     spec::Union{String, Tuple, Symbol}=default_spec(mdp);
+                     kwargs...)
     sim = StepSimulator(spec; kwargs...)
     return simulate(sim, mdp, policy)
 end
@@ -189,7 +199,7 @@ end
 function stepthrough(mdp::MDP{S},
                      policy::Policy,
                      init_state::S,
-                     spec::Union{String, Tuple, Symbol}=COMPLETE_MDP_STEP;
+                     spec::Union{String, Tuple, Symbol}=default_spec(pomdp);
                      kwargs...) where {S}
     sim = StepSimulator(spec; kwargs...)
     return simulate(sim, mdp, policy, init_state)
@@ -204,7 +214,7 @@ function stepthrough(pomdp::POMDP, policy::Policy, args...; kwargs...)
             error("Ambiguity between `initial_state` and `spec` arguments in stepthrough. Please explicitly specify the initial state and spec.")
         end
     else
-        spec = COMPLETE_POMDP_STEP
+        spec = default_spec(pomdp)
     end
     sim = StepSimulator(spec; kwargs...)
     return simulate(sim, pomdp, policy, args[1:end-spec_included]...)

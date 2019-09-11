@@ -8,6 +8,7 @@ using POMDPPolicies
 using POMDPModelTools
 using BeliefUpdaters
 using Distributed
+using NamedTupleTools
 
 import POMDPs: simulate, discount
 

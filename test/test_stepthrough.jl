@@ -29,11 +29,11 @@ end
     p = BabyPOMDP()
     policy = FeedWhenCrying()
     up = PreviousObservationUpdater()
-    sim = StepSimulator("s,sp,r,a,b,ui,i,ai", rng=MersenneTwister(3), max_steps=100)
+    sim = StepSimulator("s,sp,r,a,b,ui,ai", rng=MersenneTwister(3), max_steps=100)
     s_init = rand(sim.rng, [true, false])
     b_init = false
     n_steps = 0
-    for (s, sp, r, a, b, ui, i, ai) in simulate(sim, p, policy, up, b_init, s_init)
+    for (s, sp, r, a, b, ui, ai) in simulate(sim, p, policy, up, b_init, s_init)
         @test isa(s, statetype(p))
         @test isa(sp, statetype(p))
         @test isa(r, Float64)
