@@ -25,7 +25,7 @@ let
 
     @show data = run_parallel(q)
     @test data[1, :reward] == data[2, :reward]
-    @test data[:reward][1] == data[:reward][2]
+    @test data[!, :reward][1] == data[!, :reward][2]
     rmprocs(procs)
 
     mdp = LegacyGridWorld()

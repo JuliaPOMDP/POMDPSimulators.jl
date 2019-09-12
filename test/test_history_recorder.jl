@@ -120,6 +120,29 @@ hi = HistoryIterator(hv, :r)
 @test collect(hi) == collect(reward_hist(hv))
 @test collect(eachstep(hv, "r")) == collect(reward_hist(hv)) # why isn't collect able to infer the type here??
 
+# test show_progress
+gw = SimpleGridWorld()
+hr = HistoryRecorder(show_progress=true, max_steps=100)
+println("Should be a progress bar below:")
+@test length(simulate(hr, gw, FunctionPolicy(s->:left), initialstate(gw, sim.rng))) <= 100
+
+# test capture_exception
+gw = SimpleGridWorld()
+hr = HistoryRecorder(show_progress=true, capture_exception=true, max_steps=100)
+counter = []
+error_policy = FunctionPolicy(function (s)
+                                  push!(counter, true)
+                                  if length(counter) <= 3
+                                      sleep(0.1) # so that the progress bar gets shown
+                                      return :left
+                                  else
+                                      error("Policy Error")
+                                  end
+                              end)
+println("Should be a progress bar below:")
+exhist = simulate(hr, gw, error_policy, initialstate(gw, sim.rng))
+@test 2 <= length(exhist) <= 10
+@test exception(exhist) !== nothing
 
 # test showprogress without max_steps
 gw = SimpleGridWorld()

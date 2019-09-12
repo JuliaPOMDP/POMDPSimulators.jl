@@ -91,22 +91,7 @@ end
 hist(it::HistoryIterator) = it.history
 spec(it::HistoryIterator) = typeof(it).parameters[2]
 
-# Note this particular function is not type-stable
-function HistoryIterator(history::AbstractSimHistory, spec::String)
-    # XXX should throw warnings for unrecognized specification characters
-    syms = [Symbol(m.match) for m in eachmatch(r"(sp|bp|ai|ui|s|a|r|b|o|i|t)", spec)]
-    if length(syms) == 1
-        return HistoryIterator{typeof(history), first(syms)}(history)
-    else
-        return HistoryIterator{typeof(history), tuple(syms...)}(history)
-    end
-end
-
-function HistoryIterator(history::AbstractSimHistory, spec::Tuple)
-    @assert all(isa(s, Symbol) for s in spec)
-    return HistoryIterator{typeof(history), spec}(history)
-end
-HistoryIterator(h::AbstractSimHistory, spec::Symbol) = HistoryIterator{typeof(h), spec}(h)
+HistoryIterator(h::AbstractSimHistory, spec) = HistoryIterator{typeof(h), convert_spec(spec)}(h)
 
 """
     for t in eachstep(hist, [spec])

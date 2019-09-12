@@ -98,15 +98,12 @@ function Base.iterate(it::POMDPSimIterator, is::Tuple{Int,S,B} = (1, it.init_sta
     return (out_tuple(it, nt), (t+1, nt.sp, nt.bp))
 end
 
-@generated function out_tuple(it::Union{MDPSimIterator, POMDPSimIterator}, all::NamedTuple)
-    spec = it.parameters[1]     
+function out_tuple(it::Union{MDPSimIterator{spec}, POMDPSimIterator{spec}}, all::NamedTuple) where spec
     if isa(spec, Tuple)
-        return :(NamedTupleTools.select(all, $spec))
+        return NamedTupleTools.select(all, spec)
     else 
         @assert isa(spec, Symbol) "Invalid specification: $spec is not a Symbol or Tuple."
-        return quote
-            return all[$(Meta.quot(spec))]
-        end
+        return all[spec]
     end
 end
 
@@ -124,10 +121,7 @@ function convert_spec(spec, recognized::Set{Symbol})
 end
 
 function convert_spec(spec::String)
-    syms = [Symbol(m.match) for m in eachmatch(r"(sp|bp|ai|ui|s|a|r|b|o|i|t)", spec)]
-    if length(syms) == 0
-        error("$spec does not contain any valid symbols for step iterator output. Valid symbols are sp, bp, ai, ui, s, a, r, b, o, i, t")
-    end
+    syms = spec |> x->strip(x,['(',')']) |> x->split(x,',') |> x->strip.(x) |> x->Symbol.(x)
     if length(syms) == 1
         return Symbol(first(syms))
     else

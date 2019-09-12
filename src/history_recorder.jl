@@ -67,7 +67,7 @@ end
     @req initialize_belief(::typeof(bu), ::typeof(dist))
     @req isterminal(::P, ::S)
     @req discount(::P)
-    @req generate_sor(::P, ::S, ::A, ::typeof(sim.rng))
+    @req gen(::DDNOut{(:sp,:o,:r)}, ::P, ::S, ::A, ::typeof(sim.rng))
     b = initialize_belief(bu, dist)
     B = typeof(b)
     @req action(::typeof(policy), ::B)
@@ -126,7 +126,7 @@ end
     A = actiontype(mdp)
     @req isterminal(::P, ::S)
     @req action(::typeof(policy), ::S)
-    @req generate_sr(::P, ::S, ::A, ::typeof(sim.rng))
+    @req gen(::DDNOut{(:sp,:r)}, ::P, ::S, ::A, ::typeof(sim.rng))
     @req discount(::P)
 end
 
@@ -197,6 +197,8 @@ Promotes all NamedTuples in the history to the same type.
 function promote_history(hist::AbstractVector)
     if isconcretetype(eltype(hist))
         return hist
+    elseif isempty(hist) # note, from above, also does not have concrete type
+        return NamedTuple{(), Tuple{}}[]
     else
         # it would really astound me if this branch was type stable
         names = fieldnames(first(hist))
@@ -205,7 +207,7 @@ function promote_history(hist::AbstractVector)
             @assert fieldnames(step) == names
             types = map(promote_type, types, fieldtypes(step))
         end
-        NT = NamedTuple{names, Tuple{types...}}
-        return convert(Vector{NT}, hist)
+        newtype = NamedTuple{names, Tuple{types...}}
+        return convert(Vector{newtype}, hist)
     end
 end
