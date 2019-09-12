@@ -109,14 +109,6 @@ end
 @generated function out_tuple(it::Union{MDPSimIterator, POMDPSimIterator}, all::NamedTuple)
     spec = it.parameters[1]     
     if isa(spec, Tuple)
-        # calls = []
-        # for sym in spec
-        #     push!(calls, :($sym = all[$(Meta.quot(sym))]))
-        # end
-
-        # return quote
-        #     return ($(calls...),)
-        # end
         return :(NamedTupleTools.select(all, $spec))
     else 
         @assert isa(spec, Symbol) "Invalid specification: $spec is not a Symbol or Tuple."
