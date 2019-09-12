@@ -93,6 +93,8 @@ function simulate(sim::HistoryRecorder,
             error("If show_progress=true in a HistoryRecorder, you must also specify max_steps or eps.")
         end
         prog = Progress(max_steps, "Simulating..." )
+    else
+        prog = nothing
     end
 
     it = POMDPSimIterator(default_spec(pomdp),
@@ -104,31 +106,7 @@ function simulate(sim::HistoryRecorder,
                           is,
                           max_steps)
 
-    history, exception, backtrace = collect_history(it, Val(sim.capture_exception), Val(sim.show_progress))
-    if sim.capture_exception
-        history = NamedTuple[] # capturing part of the history is more important than this having a concrete type
-        try
-            for step in it
-                push!(history, step)
-                if sim.show_progress
-                    next!(prog)
-                end
-            end
-        catch ex
-            exception = ex
-            backtrace = catch_backtrace()
-        end
-    else # don't need to capture exceptions, so we can use collect for max type inference
-        if sim.show_progress
-            # this strange construct is here so that type inference doesn't depend on show_progress
-            history = collect(begin
-                              next!(prog)
-                              step
-                          end for step in it)
-        else
-            history = collect(it)
-        end
-    end
+    history, exception, backtrace = collect_history(it, Val(sim.capture_exception), prog)
 
     if sim.show_progress
         finish!(prog)
@@ -161,9 +139,6 @@ function simulate(sim::HistoryRecorder,
         max_steps = min(max_steps, ceil(Int,log(sim.eps)/log(discount(mdp))))
     end
 
-    exception = nothing
-    backtrace = nothing
-
     it = MDPSimIterator(default_spec(mdp),
                         mdp,
                         policy,
@@ -176,35 +151,45 @@ function simulate(sim::HistoryRecorder,
             error("If show_progress=true in a HistoryRecorder, you must also specify max_steps or eps.")
         end
         prog = Progress(max_steps, "Simulating..." )
+    else
+        prog = nothing
     end
     
-    try
-        if sim.show_progress
-            # this strange construct is here so that type inferrence doesn't depend on show_progress
-            history = collect(begin
-                               next!(prog)
-                               step
-                           end for step in it)
-        else
-            history = collect(it)
-        end
-    catch ex
-        if sim.capture_exception
-            exception = ex
-            backtrace = catch_backtrace()
-        else
-            rethrow(ex)
-        end
-    end
+    history, exception, backtrace = collect_history(it, Val(sim.capture_exception), prog)
 
     if sim.show_progress
         finish!(prog)
     end
 
-    return MDPHistory(promote_history(history), discount(mdp), exception, backtrace)
+    return SimHistory(promote_history(history), discount(mdp), exception, backtrace)
 end
 
-function collect_history(it, cap_ex::)
+function collect_history(it, cap_ex::Val{true}, prog::Union{Progress,Nothing})
+    exception = nothing
+    backtrace = nothing
+    history = NamedTuple[] # capturing part of the history is more important than this having a concrete type
+    try
+        for step in it
+            push!(history, step)
+            if prog !== nothing
+                next!(prog)
+            end
+        end
+    catch ex
+        exception = ex
+        backtrace = catch_backtrace()
+    end
+    return history, exception, backtrace
+end
+
+collect_history(it, cap_ex::Val{false}, prog::Nothing) = collect(it), nothing, nothing
+function collect_history(it, cap_ex::Val{false}, prog::Progress)
+    h = collect(begin
+                    next!(prog)
+                    step
+                end for step in it)
+    return h, nothing, nothing
+end
 
 """
 Promotes all NamedTuples in the history to the same type.

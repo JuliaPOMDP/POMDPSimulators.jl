@@ -48,8 +48,8 @@ exception(h::SimHistory) = h.exception
 Base.backtrace(h::SimHistory) = h.backtrace
 POMDPs.discount(h::SimHistory) = h.discount
 
-undiscounted_reward(h::SimHistory) = sum(reward_hist(h))
-function discounted_reward(h::SimHistory)
+undiscounted_reward(h::AbstractSimHistory) = sum(reward_hist(h))
+function discounted_reward(h::AbstractSimHistory)
     disc = 1.0
     r_total = 0.0
     for r in h[:r]
@@ -61,10 +61,10 @@ end
 
 
 # AbstractArray interface
-Base.size(h::SimHistory) = (n_steps(h),)
+Base.size(h::AbstractSimHistory) = (n_steps(h),)
 
-Base.getindex(h::SimHistory, i::Int) = hist(h)[i]
-Base.getindex(h::SimHistory, s::Symbol) = (step[s] for step in hist(h))
+Base.getindex(h::AbstractSimHistory, i::Int) = hist(h)[i]
+Base.getindex(h::AbstractSimHistory, s::Symbol) = (step[s] for step in hist(h))
 
 # SubHistory
 const Inds = Union{AbstractRange,Colon,Real}
@@ -76,7 +76,7 @@ struct SubHistory{NT, H<:AbstractSimHistory{NT}, I<:Inds} <: AbstractSimHistory{
 end
 
 n_steps(h::SubHistory) = length(h.inds)
-hist(h::SubHistory) = view(hist(h.parents), h.inds)
+hist(h::SubHistory) = view(hist(h.parent), h.inds)
 
 exception(h::SubHistory) = exception(h.parent)
 Base.backtrace(h::SubHistory) = backtrace(h.parent)
@@ -92,7 +92,7 @@ hist(it::HistoryIterator) = it.history
 spec(it::HistoryIterator) = typeof(it).parameters[2]
 
 # Note this particular function is not type-stable
-function HistoryIterator(history::SimHistory, spec::String)
+function HistoryIterator(history::AbstractSimHistory, spec::String)
     # XXX should throw warnings for unrecognized specification characters
     syms = [Symbol(m.match) for m in eachmatch(r"(sp|bp|ai|ui|s|a|r|b|o|i|t)", spec)]
     if length(syms) == 1
@@ -102,11 +102,11 @@ function HistoryIterator(history::SimHistory, spec::String)
     end
 end
 
-function HistoryIterator(history::SimHistory, spec::Tuple)
+function HistoryIterator(history::AbstractSimHistory, spec::Tuple)
     @assert all(isa(s, Symbol) for s in spec)
     return HistoryIterator{typeof(history), spec}(history)
 end
-HistoryIterator(h::SimHistory, spec::Symbol) = HistoryIterator{typeof(h), spec}(h)
+HistoryIterator(h::AbstractSimHistory, spec::Symbol) = HistoryIterator{typeof(h), spec}(h)
 
 """
     for t in eachstep(hist, [spec])
@@ -139,13 +139,13 @@ The possible valid elements in the iteration specification are
 - `t` - the timestep index
 """
 eachstep(hist::AbstractSimHistory, spec) = HistoryIterator(hist, spec)
-eachstep(mh::AbstractSimHistory) = hist(h)
+eachstep(mh::AbstractSimHistory) = mh
 
 function step_tuple(it::HistoryIterator, i::Int)
-    if isa(spec, Tuple)
-        return select(hist(it)[i], spec(it))
+    if isa(spec(it), Tuple)
+        return NamedTupleTools.select(hist(it)[i], spec(it))
     else
-        @assert isa(spec, Symbol)
+        @assert isa(spec(it), Symbol) "Output specification $(spec(it)) was not a Tuple or Symbol"
         return hist(it)[i][spec(it)]
     end
 end

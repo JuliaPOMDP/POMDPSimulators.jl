@@ -49,7 +49,7 @@ end
 
 # test that complete step is returned
 step = first(eachstep(r2))
-for key in POMDPSimulators.COMPLETE_POMDP_STEP
+for key in POMDPSimulators.default_spec(problem)
     @test haskey(step, key)
     @test first(r2[key]) == step[key]
 end
@@ -68,11 +68,7 @@ r1 = simulate(sim, problem, policy, initialstate(problem, sim.rng))
 @test r1[end] == last(r1)
 @test r1[1] == first(r1)
 for tuple in r1
-    @test length(tuple) == length(POMDPSimulators.COMPLETE_MDP_STEP)
-    @test isa(tuple[1], statetype(problem))
-    @test isa(tuple[2], actiontype(problem))
-    @test isa(tuple[3], Float64)
-    @test isa(tuple[4], statetype(problem))
+    @test length(tuple) == length(POMDPSimulators.default_spec(problem))
     @test isa(tuple.s, statetype(problem))
     @test isa(tuple.a, actiontype(problem))
     @test isa(tuple.r, Float64)
@@ -83,7 +79,7 @@ display(r1)
 println()
 
 step = first(eachstep(r1))
-for key in POMDPSimulators.COMPLETE_MDP_STEP
+for key in POMDPSimulators.default_spec(problem)
     @test haskey(step, key)
     @test first(r1[key]) == step[key]
 end
@@ -92,17 +88,16 @@ end
 
 hv = view(r1, 2:length(r1))
 @test n_steps(hv) == n_steps(r1)-1
-@test undiscounted_reward(r1) == undiscounted_reward(hv) + reward_hist(r1)[1]
+@test undiscounted_reward(r1) == undiscounted_reward(hv) + first(reward_hist(r1))
 
 # iterators
 rsum = 0.0
 len = 0
-for (s, a, r, sp, i, ai, t) in eachstep(hv, (:s,:a,:r,:sp,:i,:ai,:t))
+for (s, a, r, sp, ai, t) in eachstep(hv, (:s,:a,:r,:sp,:ai,:t))
     @test isa(s, statetype(problem))
     @test isa(a, actiontype(problem))
     @test isa(r, Float64)
     @test isa(sp, statetype(problem))
-    @test isa(i, Nothing)
     @test isa(ai, Nothing)
     @test isa(t, Int)
     rsum += r
@@ -120,7 +115,11 @@ tuples = collect(eachstep(hv, "r,sp,s,a,t"))
 @test sum(first(t) for t in tuples) == undiscounted_reward(hv)
 @test sum(t.r for t in tuples) == undiscounted_reward(hv)
 
-@test collect(eachstep(hv, "r")) == reward_hist(hv)
+hi = HistoryIterator(hv, :r)
+@inferred POMDPSimulators.step_tuple(hi, 1)
+@test collect(hi) == collect(reward_hist(hv))
+@test collect(eachstep(hv, "r")) == collect(reward_hist(hv)) # why isn't collect able to infer the type here??
+
 
 # test showprogress without max_steps
 gw = SimpleGridWorld()
