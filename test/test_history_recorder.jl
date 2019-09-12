@@ -6,7 +6,7 @@ sim = HistoryRecorder(max_steps=steps, rng=MersenneTwister(3))
 @show_requirements simulate(sim, problem, policy, updater(policy), initialstate_distribution(problem))
 r1 = simulate(sim, problem, policy, updater(policy), initialstate_distribution(problem))
 policy.rng = MersenneTwister(2)
-sim.rng = MersenneTwister(3)
+Random.seed!(sim.rng, 3)
 r2 = simulate(sim, problem, policy)
 
 @test length(state_hist(r1)) == steps+1
@@ -37,7 +37,7 @@ display(r1)
 println()
 
 for tuple in r1
-    length(tuple) == length(POMDPSimulators.COMPLETE_POMDP_STEP)
+    @test length(tuple) == length(POMDPSimulators.default_spec(problem))
 end
 
 for ui in eachstep(r2, "ui")

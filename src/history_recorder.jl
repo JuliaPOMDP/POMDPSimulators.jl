@@ -15,14 +15,13 @@ Keyword Arguments:
     - `show_progress::Bool`: show a progress bar for the simulation
     - `eps`
     - `max_steps`
-    - `sizehint::Int`: the expected length of the simulation (for preallocation)
 
 Usage (optional arguments in brackets):
 
     hr = HistoryRecorder()
     history = simulate(hr, pomdp, policy, [updater [, init_belief [, init_state]]])
 """
-struct HistoryRecorder <: Simulator
+mutable struct HistoryRecorder <: Simulator
     rng::AbstractRNG
 
     # options
@@ -32,17 +31,15 @@ struct HistoryRecorder <: Simulator
     # optional: if these are null, they will be ignored
     max_steps::Union{Nothing,Any}
     eps::Union{Nothing,Any}
-    sizehint::Union{Nothing,Integer}
 end
 
 # This is the only stable constructor
 function HistoryRecorder(;rng=MersenneTwister(rand(UInt32)),
                           eps=nothing,
                           max_steps=nothing,
-                          sizehint=nothing,
                           capture_exception=false,
                           show_progress=false)
-    return HistoryRecorder(rng, capture_exception, show_progress, max_steps, eps, sizehint)
+    return HistoryRecorder(rng, capture_exception, show_progress, max_steps, eps)
 end
 
 @POMDP_require simulate(sim::HistoryRecorder, pomdp::POMDP, policy::Policy) begin
@@ -86,24 +83,11 @@ function simulate(sim::HistoryRecorder,
                   ) where {S,A,O}
 
     initial_belief = initialize_belief(bu, initialstate_dist)
-    if sim.max_steps == nothing
-        max_steps = typemax(Int)
-    else
-        max_steps = sim.max_steps
-    end
+    max_steps = something(sim.max_steps, typemax(Int))
     if sim.eps != nothing
         max_steps = min(max_steps, ceil(Int,log(sim.eps)/log(discount(pomdp))))
     end
-    if sim.sizehint == nothing
-        sizehint = min(max_steps, 1000)
-    else
-        sizehint = sim.sizehint
-    end
-
-    # aliases for the histories to make the code more concise
-    exception = nothing
-    backtrace = nothing
-
+    
     if sim.show_progress
         if (sim.max_steps == nothing) && (sim.eps == nothing)
             error("If show_progress=true in a HistoryRecorder, you must also specify max_steps or eps.")
@@ -111,34 +95,38 @@ function simulate(sim::HistoryRecorder,
         prog = Progress(max_steps, "Simulating..." )
     end
 
-    disc = 1.0
-    step = 1
-
     it = POMDPSimIterator(default_spec(pomdp),
                           pomdp,
                           policy,
                           bu,
-                          rng,
+                          sim.rng,
                           initial_belief,
                           is,
                           max_steps)
 
-    try
-        if sim.show_progress
-            # this strange construct is here so that type inferrence doesn't depend on show_progress
-            hist = collect(begin
-                               next!(prog)
-                               step
-                           end for step in it)
-        else
-            hist = collect(it)
-        end
-    catch ex
-        if sim.capture_exception
+    history, exception, backtrace = collect_history(it, Val(sim.capture_exception), Val(sim.show_progress))
+    if sim.capture_exception
+        history = NamedTuple[] # capturing part of the history is more important than this having a concrete type
+        try
+            for step in it
+                push!(history, step)
+                if sim.show_progress
+                    next!(prog)
+                end
+            end
+        catch ex
             exception = ex
             backtrace = catch_backtrace()
+        end
+    else # don't need to capture exceptions, so we can use collect for max type inference
+        if sim.show_progress
+            # this strange construct is here so that type inference doesn't depend on show_progress
+            history = collect(begin
+                              next!(prog)
+                              step
+                          end for step in it)
         else
-            rethrow(ex)
+            history = collect(it)
         end
     end
 
@@ -146,7 +134,7 @@ function simulate(sim::HistoryRecorder,
         finish!(prog)
     end
 
-    return SimHistory(promot_hist(hist), discount(pomdp), exception, backtrace)
+    return SimHistory(promote_history(history), discount(pomdp), exception, backtrace)
 end
 
 @POMDP_require simulate(sim::HistoryRecorder, mdp::MDP, policy::Policy) begin
@@ -168,28 +156,20 @@ function simulate(sim::HistoryRecorder,
                   mdp::MDP{S,A}, policy::Policy,
                   init_state::S=initialstate(mdp, sim.rng)) where {S,A}
     
-    if sim.max_steps == nothing
-        max_steps = typemax(Int)
-    else
-        max_steps = sim.max_steps
-    end
+    max_steps = something(sim.max_steps, typemax(Int))
     if sim.eps != nothing
         max_steps = min(max_steps, ceil(Int,log(sim.eps)/log(discount(mdp))))
     end
-    if sim.sizehint == nothing
-        sizehint = min(max_steps, 1000)
-    else
-        sizehint = sim.sizehint
-    end
 
-    # aliases for the histories to make the code more concise
-    sh = sizehint!(Vector{S}(undef, 0), sizehint)
-    ah = sizehint!(Vector{A}(undef, 0), sizehint)
-    rh = sizehint!(Vector{Float64}(undef, 0), sizehint)
-    ih = sizehint!(Vector{Any}(undef, 0), sizehint)
-    aih = sizehint!(Vector{Any}(undef, 0), sizehint)
     exception = nothing
     backtrace = nothing
+
+    it = MDPSimIterator(default_spec(mdp),
+                        mdp,
+                        policy,
+                        sim.rng,
+                        init_state,
+                        max_steps)
 
     if sim.show_progress
         if (sim.max_steps == nothing) && (sim.eps == nothing)
@@ -198,29 +178,15 @@ function simulate(sim::HistoryRecorder,
         prog = Progress(max_steps, "Simulating..." )
     end
     
-    push!(sh, init_state)
-
-    disc = 1.0
-    step = 1
-
     try
-        while !isterminal(mdp, sh[step]) && step <= max_steps
-            a, ai = action_info(policy, sh[step])
-            push!(ah, a)
-            push!(aih, ai)
-
-            sp, r, i = generate_sri(mdp, sh[step], ah[step], sim.rng)
-
-            push!(sh, sp)
-            push!(rh, r)
-            push!(ih, i)
-
-            disc *= discount(mdp)
-            step += 1
-
-            if sim.show_progress
-                next!(prog)
-            end
+        if sim.show_progress
+            # this strange construct is here so that type inferrence doesn't depend on show_progress
+            history = collect(begin
+                               next!(prog)
+                               step
+                           end for step in it)
+        else
+            history = collect(it)
         end
     catch ex
         if sim.capture_exception
@@ -235,9 +201,14 @@ function simulate(sim::HistoryRecorder,
         finish!(prog)
     end
 
-    return MDPHistory(sh, ah, rh, ih, aih, discount(mdp), exception, backtrace)
+    return MDPHistory(promote_history(history), discount(mdp), exception, backtrace)
 end
 
+function collect_history(it, cap_ex::)
+
+"""
+Promotes all NamedTuples in the history to the same type.
+"""
 function promote_history(hist::AbstractVector)
     if isconcretetype(eltype(hist))
         return hist
@@ -247,7 +218,7 @@ function promote_history(hist::AbstractVector)
         types = fieldtypes(first(hist))
         for step in hist
             @assert fieldnames(step) == names
-            types = map(promote_rule, types, fieldtypes(step))
+            types = map(promote_type, types, fieldtypes(step))
         end
         NT = NamedTuple{names, Tuple{types...}}
         return convert(Vector{NT}, hist)

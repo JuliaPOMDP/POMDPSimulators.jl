@@ -38,7 +38,7 @@ hist(h::SimHistory) = h.hist
 state_hist(h::AbstractSimHistory) = push!([step.s for step in hist(h)], last(hist(h)).sp)
 action_hist(h::AbstractSimHistory) = h[:a]
 observation_hist(h::AbstractSimHistory) = h[:o]
-belief_hist(h::AbstractSimHistory) = h[:b]
+belief_hist(h::AbstractSimHistory) = push!([step.b for step in hist(h)], last(hist(h)).bp)
 reward_hist(h::AbstractSimHistory) = h[:r]
 info_hist(h::AbstractSimHistory) = h[:i]
 ainfo_hist(h::AbstractSimHistory) = h[:ai]
@@ -52,8 +52,8 @@ undiscounted_reward(h::SimHistory) = sum(reward_hist(h))
 function discounted_reward(h::SimHistory)
     disc = 1.0
     r_total = 0.0
-    for i in 1:length(reward_hist(h))
-        r_total += disc*reward_hist(h)[i]
+    for r in h[:r]
+        r_total += disc*r
         disc *= discount(h)
     end
     return r_total
