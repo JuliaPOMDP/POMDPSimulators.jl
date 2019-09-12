@@ -22,7 +22,7 @@ Usage (optional arguments in brackets):
     hr = HistoryRecorder()
     history = simulate(hr, pomdp, policy, [updater [, init_belief [, init_state]]])
 """
-mutable struct HistoryRecorder <: Simulator
+struct HistoryRecorder <: Simulator
     rng::AbstractRNG
 
     # options
@@ -101,19 +101,8 @@ function simulate(sim::HistoryRecorder,
     end
 
     # aliases for the histories to make the code more concise
-    sh = sizehint!(Vector{S}(undef, 0), sizehint)
-    ah = sizehint!(Vector{A}(undef, 0), sizehint)
-    oh = sizehint!(Vector{O}(undef, 0), sizehint)
-    bh = sizehint!(Vector{typeof(initial_belief)}(undef, 0), sizehint)
-    rh = sizehint!(Vector{Float64}(undef, 0), sizehint)
-    ih = sizehint!(Vector{Any}(undef, 0), sizehint)
-    aih = sizehint!(Vector{Any}(undef, 0), sizehint)
-    uih = sizehint!(Vector{Any}(undef, 0), sizehint)
     exception = nothing
     backtrace = nothing
-
-    push!(sh, is)
-    push!(bh, initial_belief)
 
     if sim.show_progress
         if (sim.max_steps == nothing) && (sim.eps == nothing)
@@ -125,28 +114,24 @@ function simulate(sim::HistoryRecorder,
     disc = 1.0
     step = 1
 
+    it = POMDPSimIterator(default_spec(pomdp),
+                          pomdp,
+                          policy,
+                          bu,
+                          rng,
+                          initial_belief,
+                          is,
+                          max_steps)
+
     try
-        while !isterminal(pomdp, sh[step]) && step <= max_steps
-            a, ai = action_info(policy, bh[step])
-            push!(ah, a)
-            push!(aih, ai)
-
-            sp, o, r, i = generate_sori(pomdp, sh[step], ah[step], sim.rng)
-
-            push!(sh, sp)
-            push!(oh, o)
-            push!(rh, r)
-            push!(ih, i)
-
-            bp, ui = update_info(bu, bh[step], ah[step], oh[step])
-            bh = push_belief(bh, bp)
-            push!(uih, ui)
-
-            step += 1
-
-            if sim.show_progress
-                next!(prog)
-            end
+        if sim.show_progress
+            # this strange construct is here so that type inferrence doesn't depend on show_progress
+            hist = collect(begin
+                               next!(prog)
+                               step
+                           end for step in it)
+        else
+            hist = collect(it)
         end
     catch ex
         if sim.capture_exception
@@ -161,7 +146,7 @@ function simulate(sim::HistoryRecorder,
         finish!(prog)
     end
 
-    return POMDPHistory(sh, ah, oh, bh, rh, ih, aih, uih, discount(pomdp), exception, backtrace)
+    return SimHistory(promot_hist(hist), discount(pomdp), exception, backtrace)
 end
 
 @POMDP_require simulate(sim::HistoryRecorder, mdp::MDP, policy::Policy) begin
@@ -253,23 +238,18 @@ function simulate(sim::HistoryRecorder,
     return MDPHistory(sh, ah, rh, ih, aih, discount(mdp), exception, backtrace)
 end
 
-# function get_initialstate(sim::Simulator, initialstate_dist)
-#     return rand(sim.rng, initialstate_dist)
-# end
-# 
-# function get_initialstate(sim::Simulator, mdp::Union{MDP,POMDP})
-#     return initialstate(mdp, sim.rng)
-# end
-
-# this is kind of a hack in cases where the belief isn't stable
-push_belief(bh::Vector{T}, b::T) where T = push!(bh, b)
-function push_belief(bh::Vector{T}, b::B) where {B, T}
-    if !(T isa Union) # if T is not already a Union, try making a Union of the two types; don't jump straight to Any
-        new = Vector{Union{T,B}}(undef, length(bh)+1)
+function promote_history(hist::AbstractVector)
+    if isconcretetype(eltype(hist))
+        return hist
     else
-        new = Vector{promote_type(T, B)}(undef, length(bh)+1)
+        # it would really astound me if this branch was type stable
+        names = fieldnames(first(hist))
+        types = fieldtypes(first(hist))
+        for step in hist
+            @assert fieldnames(step) == names
+            types = map(promote_rule, types, fieldtypes(step))
+        end
+        NT = NamedTuple{names, Tuple{types...}}
+        return convert(Vector{NT}, hist)
     end
-    new[1:end-1] = bh
-    new[end] = b
-    return new
 end
