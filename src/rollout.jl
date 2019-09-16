@@ -76,7 +76,7 @@ end
     @req initialize_belief(::typeof(updater), ::typeof(initial_belief))
     @req isterminal(::P, ::S)
     @req discount(::P)
-    @req generate_sor(::P, ::S, ::A, ::typeof(sim.rng))
+    @req gen(::DDNOut{(:sp,:o,:r)}, ::P, ::S, ::A, ::typeof(sim.rng))
     b = initialize_belief(updater, initial_belief)
     @req action(::typeof(policy), ::typeof(b))
     @req update(::typeof(updater), ::typeof(b), ::A, ::O)
@@ -107,7 +107,7 @@ function simulate(sim::RolloutSimulator, pomdp::POMDP, policy::Policy, updater::
 
         a = action(policy, b)
 
-        sp, o, r = generate_sor(pomdp, s, a, sim.rng)
+        sp, o, r = gen(DDNOut(:sp,:o,:r), pomdp, s, a, sim.rng)
 
         r_total += disc*r
 
@@ -134,7 +134,7 @@ end
     A = actiontype(mdp)
     @req isterminal(::P, ::S)
     @req action(::typeof(policy), ::S)
-    @req generate_sr(::P, ::S, ::A, ::typeof(sim.rng))
+    @req gen(::DDNOut{(:sp,:r)}, ::P, ::S, ::A, ::typeof(sim.rng))
     @req discount(::P)
 end
 
@@ -166,7 +166,7 @@ function simulate(sim::RolloutSimulator, mdp::Union{MDP{S}, POMDP{S}}, policy::P
     while disc > eps && !isterminal(mdp, s) && step <= max_steps
         a = action(policy, s)
 
-        sp, r = generate_sr(mdp, s, a, sim.rng)
+        sp, r = gen(DDNOut(:sp,:r), mdp, s, a, sim.rng)
 
         r_total += disc*r
 

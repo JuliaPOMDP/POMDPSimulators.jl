@@ -6,7 +6,7 @@ sim = HistoryRecorder(max_steps=steps, rng=MersenneTwister(3))
 @show_requirements simulate(sim, problem, policy, updater(policy), initialstate_distribution(problem))
 r1 = simulate(sim, problem, policy, updater(policy), initialstate_distribution(problem))
 policy.rng = MersenneTwister(2)
-sim.rng = MersenneTwister(3)
+Random.seed!(sim.rng, 3)
 r2 = simulate(sim, problem, policy)
 
 @test length(state_hist(r1)) == steps+1
@@ -37,7 +37,7 @@ display(r1)
 println()
 
 for tuple in r1
-    length(tuple) == length(POMDPSimulators.COMPLETE_POMDP_STEP)
+    @test length(tuple) == length(POMDPSimulators.default_spec(problem))
 end
 
 for ui in eachstep(r2, "ui")
@@ -49,7 +49,7 @@ end
 
 # test that complete step is returned
 step = first(eachstep(r2))
-for key in POMDPSimulators.COMPLETE_POMDP_STEP
+for key in POMDPSimulators.default_spec(problem)
     @test haskey(step, key)
     @test first(r2[key]) == step[key]
 end
@@ -68,11 +68,7 @@ r1 = simulate(sim, problem, policy, initialstate(problem, sim.rng))
 @test r1[end] == last(r1)
 @test r1[1] == first(r1)
 for tuple in r1
-    @test length(tuple) == length(POMDPSimulators.COMPLETE_MDP_STEP)
-    @test isa(tuple[1], statetype(problem))
-    @test isa(tuple[2], actiontype(problem))
-    @test isa(tuple[3], Float64)
-    @test isa(tuple[4], statetype(problem))
+    @test length(tuple) == length(POMDPSimulators.default_spec(problem))
     @test isa(tuple.s, statetype(problem))
     @test isa(tuple.a, actiontype(problem))
     @test isa(tuple.r, Float64)
@@ -83,7 +79,7 @@ display(r1)
 println()
 
 step = first(eachstep(r1))
-for key in POMDPSimulators.COMPLETE_MDP_STEP
+for key in POMDPSimulators.default_spec(problem)
     @test haskey(step, key)
     @test first(r1[key]) == step[key]
 end
@@ -92,17 +88,16 @@ end
 
 hv = view(r1, 2:length(r1))
 @test n_steps(hv) == n_steps(r1)-1
-@test undiscounted_reward(r1) == undiscounted_reward(hv) + reward_hist(r1)[1]
+@test undiscounted_reward(r1) == undiscounted_reward(hv) + first(reward_hist(r1))
 
 # iterators
 rsum = 0.0
 len = 0
-for (s, a, r, sp, i, ai, t) in eachstep(hv, (:s,:a,:r,:sp,:i,:ai,:t))
+for (s, a, r, sp, ai, t) in eachstep(hv, (:s,:a,:r,:sp,:ai,:t))
     @test isa(s, statetype(problem))
     @test isa(a, actiontype(problem))
     @test isa(r, Float64)
     @test isa(sp, statetype(problem))
-    @test isa(i, Nothing)
     @test isa(ai, Nothing)
     @test isa(t, Int)
     rsum += r
@@ -120,7 +115,34 @@ tuples = collect(eachstep(hv, "r,sp,s,a,t"))
 @test sum(first(t) for t in tuples) == undiscounted_reward(hv)
 @test sum(t.r for t in tuples) == undiscounted_reward(hv)
 
-@test collect(eachstep(hv, "r")) == reward_hist(hv)
+hi = HistoryIterator(hv, :r)
+@inferred POMDPSimulators.step_tuple(hi, 1)
+@test collect(hi) == collect(reward_hist(hv))
+@test collect(eachstep(hv, "r")) == collect(reward_hist(hv)) # why isn't collect able to infer the type here??
+
+# test show_progress
+gw = SimpleGridWorld()
+hr = HistoryRecorder(show_progress=true, max_steps=100)
+println("Should be a progress bar below:")
+@test length(simulate(hr, gw, FunctionPolicy(s->:left), initialstate(gw, sim.rng))) <= 100
+
+# test capture_exception
+gw = SimpleGridWorld()
+hr = HistoryRecorder(show_progress=true, capture_exception=true, max_steps=100)
+counter = []
+error_policy = FunctionPolicy(function (s)
+                                  push!(counter, true)
+                                  if length(counter) <= 3
+                                      sleep(0.1) # so that the progress bar gets shown
+                                      return :left
+                                  else
+                                      error("Policy Error")
+                                  end
+                              end)
+println("Should be a progress bar below:")
+exhist = simulate(hr, gw, error_policy, initialstate(gw, sim.rng))
+@test 2 <= length(exhist) <= 10
+@test exception(exhist) !== nothing
 
 # test showprogress without max_steps
 gw = SimpleGridWorld()

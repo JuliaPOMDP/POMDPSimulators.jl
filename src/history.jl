@@ -11,7 +11,7 @@ nt_type(h::AbstractSimHistory) = nt_type(typeof(h))
 
 An (PO)MDP simulation history returned by `simulate(::HistoryRecorder, ::Union{MDP,POMDP},...)`.
 
-This is an `AbstractVector` of `NamedTuples` containing the states, actions, etc.
+This is an `AbstractVector` of [`NamedTuples`](https://docs.julialang.org/en/v1/manual/types/index.html#Named-Tuple-Types-1) containing the states, actions, etc.
 
 # Examples
 ```
@@ -38,7 +38,7 @@ hist(h::SimHistory) = h.hist
 state_hist(h::AbstractSimHistory) = push!([step.s for step in hist(h)], last(hist(h)).sp)
 action_hist(h::AbstractSimHistory) = h[:a]
 observation_hist(h::AbstractSimHistory) = h[:o]
-belief_hist(h::AbstractSimHistory) = h[:b]
+belief_hist(h::AbstractSimHistory) = push!([step.b for step in hist(h)], last(hist(h)).bp)
 reward_hist(h::AbstractSimHistory) = h[:r]
 info_hist(h::AbstractSimHistory) = h[:i]
 ainfo_hist(h::AbstractSimHistory) = h[:ai]
@@ -48,12 +48,12 @@ exception(h::SimHistory) = h.exception
 Base.backtrace(h::SimHistory) = h.backtrace
 POMDPs.discount(h::SimHistory) = h.discount
 
-undiscounted_reward(h::SimHistory) = sum(reward_hist(h))
-function discounted_reward(h::SimHistory)
+undiscounted_reward(h::AbstractSimHistory) = sum(reward_hist(h))
+function discounted_reward(h::AbstractSimHistory)
     disc = 1.0
     r_total = 0.0
-    for i in 1:length(reward_hist(h))
-        r_total += disc*reward_hist(h)[i]
+    for r in h[:r]
+        r_total += disc*r
         disc *= discount(h)
     end
     return r_total
@@ -61,10 +61,10 @@ end
 
 
 # AbstractArray interface
-Base.size(h::SimHistory) = (n_steps(h),)
+Base.size(h::AbstractSimHistory) = (n_steps(h),)
 
-Base.getindex(h::SimHistory, i::Int) = hist(h)[i]
-Base.getindex(h::SimHistory, s::Symbol) = (step[s] for step in hist(h))
+Base.getindex(h::AbstractSimHistory, i::Int) = hist(h)[i]
+Base.getindex(h::AbstractSimHistory, s::Symbol) = (step[s] for step in hist(h))
 
 # SubHistory
 const Inds = Union{AbstractRange,Colon,Real}
@@ -76,7 +76,7 @@ struct SubHistory{NT, H<:AbstractSimHistory{NT}, I<:Inds} <: AbstractSimHistory{
 end
 
 n_steps(h::SubHistory) = length(h.inds)
-hist(h::SubHistory) = view(hist(h.parents), h.inds)
+hist(h::SubHistory) = view(hist(h.parent), h.inds)
 
 exception(h::SubHistory) = exception(h.parent)
 Base.backtrace(h::SubHistory) = backtrace(h.parent)
@@ -91,22 +91,7 @@ end
 hist(it::HistoryIterator) = it.history
 spec(it::HistoryIterator) = typeof(it).parameters[2]
 
-# Note this particular function is not type-stable
-function HistoryIterator(history::SimHistory, spec::String)
-    # XXX should throw warnings for unrecognized specification characters
-    syms = [Symbol(m.match) for m in eachmatch(r"(sp|bp|ai|ui|s|a|r|b|o|i|t)", spec)]
-    if length(syms) == 1
-        return HistoryIterator{typeof(history), first(syms)}(history)
-    else
-        return HistoryIterator{typeof(history), tuple(syms...)}(history)
-    end
-end
-
-function HistoryIterator(history::SimHistory, spec::Tuple)
-    @assert all(isa(s, Symbol) for s in spec)
-    return HistoryIterator{typeof(history), spec}(history)
-end
-HistoryIterator(h::SimHistory, spec::Symbol) = HistoryIterator{typeof(h), spec}(h)
+HistoryIterator(h::AbstractSimHistory, spec) = HistoryIterator{typeof(h), convert_spec(spec)}(h)
 
 """
     for t in eachstep(hist, [spec])
@@ -131,7 +116,7 @@ end
 ```
 
 The possible valid elements in the iteration specification are
-- Any node in the (PO)MDP Dynamic Decision network (by default :s, :a, :sp, :o, :r)
+- Any node in the (PO)MDP Dynamic Decision network (by default `:s`, `:a`, `:sp`, `:o`, `:r`)
 - `b` - the initial belief in the step (for POMDPs only)
 - `bp` - the belief after being updated based on `o` (for POMDPs only)
 - `ai` - info from the policy decision (from `action_info`)
@@ -139,13 +124,13 @@ The possible valid elements in the iteration specification are
 - `t` - the timestep index
 """
 eachstep(hist::AbstractSimHistory, spec) = HistoryIterator(hist, spec)
-eachstep(mh::AbstractSimHistory) = hist(h)
+eachstep(mh::AbstractSimHistory) = mh
 
 function step_tuple(it::HistoryIterator, i::Int)
-    if isa(spec, Tuple)
-        return select(hist(it)[i], spec(it))
+    if isa(spec(it), Tuple)
+        return NamedTupleTools.select(hist(it)[i], spec(it))
     else
-        @assert isa(spec, Symbol)
+        @assert isa(spec(it), Symbol) "Output specification $(spec(it)) was not a Tuple or Symbol"
         return hist(it)[i][spec(it)]
     end
 end
