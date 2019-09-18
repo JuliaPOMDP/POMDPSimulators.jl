@@ -51,7 +51,7 @@ function Base.iterate(it::MDPSimIterator, is::Tuple{Int, S}=(1, it.init_state)) 
     a, ai = action_info(it.policy, s)
     on = outputnames(DDNStructure(it.mdp))
     out = gen(DDNOut(on), it.mdp, s, a, it.rng)
-    nt = merge(namedtuple(on, out), (t=t, s=s, a=a, ai=ai))
+    nt = merge(namedtuple(on, out), (t=t, s=s, a=a, action_info=ai))
     return (out_tuple(it, nt), (t+1, nt.sp))
 end
 
@@ -94,26 +94,54 @@ function Base.iterate(it::POMDPSimIterator, is::Tuple{Int,S,B} = (1, it.init_sta
     out = gen(DDNOut(on), it.pomdp, s, a, it.rng)
     outnt = namedtuple(on, out)
     bp, ui = update_info(it.updater, b, a, outnt.o)
-    nt = merge(outnt, (t=t, b=b, s=s, a=a, ai=ai, bp=bp, ui=ui))
+    nt = merge(outnt, (t=t, b=b, s=s, a=a, action_info=ai, bp=bp, update_info=ui))
     return (out_tuple(it, nt), (t+1, nt.sp, nt.bp))
 end
 
-function out_tuple(it::Union{MDPSimIterator{spec}, POMDPSimIterator{spec}}, all::NamedTuple) where spec
-    if isa(spec, Tuple)
-        return NamedTupleTools.select(all, spec)
-    else 
-        @assert isa(spec, Symbol) "Invalid specification: $spec is not a Symbol or Tuple."
-        return all[spec]
+@generated function out_tuple(it::Union{MDPSimIterator{spec}, POMDPSimIterator{spec}}, all::NamedTuple) where spec
+    # the only reason this is generated is to check for :ai and :ui - can get rid of in v0.4
+    newspec = Meta.quot(fixdeps(spec))
+    quote
+        if isa($newspec, Tuple)
+            return NamedTupleTools.select(all, $newspec)
+        else 
+            @assert isa(spec, Symbol) "Invalid specification: $spec is not a Symbol or Tuple."
+            return all[spec]
+        end
     end
 end
 
-convert_spec(spec, T::Type{M}) where {M<:POMDP} = convert_spec(spec, union(Set(nodenames(DDNStructure(T))), Set(tuple(:bp, :b, :ai, :ui, :t))))
-convert_spec(spec, T::Type{M}) where {M<:MDP} = convert_spec(spec, union(Set(nodenames(DDNStructure(T))), Set(tuple(:ai, :t))))
+# XXX can get rid of in v0.4
+function fixdeps(tpl::Tuple)
+    fixed = []
+    for s in tpl
+        if s == :ai && !(:action_info in tpl)
+            @warn("Automatically switching :ai to :action_info. To disable this switch (e.g. if you have an :ai node in your DDN), also include :action_info in your output spec.")
+            push!(fixed, :action_info)
+        elseif s == :ui && !(:update_info in tpl)
+            @warn("Automatically switching :ui to :update_info. To disable this switch (e.g. if you have an :ui node in your DDN), also include :update_info in your output spec.")
+            push!(fixed, :update_info)
+        else
+            push!(fixed, s)
+        end
+    end
+    return tuple(fixed...)
+end
+# if there's just one symbol, don't worry about checking for :ai and :ui
+fixdeps(s::Symbol) = s
+
+convert_spec(spec, T::Type{M}) where {M<:POMDP} = convert_spec(spec, union(Set(nodenames(DDNStructure(T))), Set(tuple(:bp, :b, :action_info, :update_info, :t))))
+convert_spec(spec, T::Type{M}) where {M<:MDP} = convert_spec(spec, union(Set(nodenames(DDNStructure(T))), Set(tuple(:action_info, :t))))
 
 function convert_spec(spec, recognized::Set{Symbol})
     conv = convert_spec(spec)
-    for s in (isa(conv, Tuple) ? conv : tuple(conv))
-        if !(s in recognized)
+    convtpl = isa(conv, Tuple) ? conv : tuple(conv)
+    for s in convtpl
+        if s == :ai && !(:action_info in convtpl)
+            @warn("Using :ai to access the action info in a history is deprecated. Use :action_info instead.") # XXX get rid of in v0.4 or greater
+        elseif s == :ui && !(:update_info in convtpl)
+            @warn("Using :ui to access the update info in a history is deprecated. Use :update_info instead.") # XXX get rid of in v0.4 or greater
+        elseif !(s in recognized)
             @warn("uncrecognized symbol $s in step iteration specification $spec.")
         end
     end
@@ -138,8 +166,8 @@ end
 
 convert_spec(spec::Symbol) = spec
 
-default_spec(m::MDP) = tuple(nodenames(DDNStructure(m))..., :t, :ai)
-default_spec(m::POMDP) = tuple(nodenames(DDNStructure(m))..., :t, :ai, :b, :bp, :ui)
+default_spec(m::MDP) = tuple(nodenames(DDNStructure(m))..., :t, :action_info)
+default_spec(m::POMDP) = tuple(nodenames(DDNStructure(m))..., :t, :action_info, :b, :bp, :update_info)
 
 """
     stepthrough(problem, policy, [spec])

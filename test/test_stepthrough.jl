@@ -3,7 +3,7 @@
     p = LegacyGridWorld()
     solver = RandomSolver(MersenneTwister(2))
     policy = solve(solver, p)
-    sim = StepSimulator("s,sp,r,a,ai", rng=MersenneTwister(3), max_steps=100)
+    sim = StepSimulator("s,sp,r,a,action_info", rng=MersenneTwister(3), max_steps=100)
     n_steps = 0
     for (s, sp, r, a, ai) in simulate(sim, p, policy)
         @test isa(s, statetype(p))
@@ -29,7 +29,7 @@ end
     p = BabyPOMDP()
     policy = FeedWhenCrying()
     up = PreviousObservationUpdater()
-    sim = StepSimulator("s,sp,r,a,b,ui,ai", rng=MersenneTwister(3), max_steps=100)
+    sim = StepSimulator("s,sp,r,a,b,update_info,action_info", rng=MersenneTwister(3), max_steps=100)
     s_init = rand(sim.rng, [true, false])
     b_init = false
     n_steps = 0

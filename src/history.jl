@@ -41,8 +41,8 @@ observation_hist(h::AbstractSimHistory) = h[:o]
 belief_hist(h::AbstractSimHistory) = push!([step.b for step in hist(h)], last(hist(h)).bp)
 reward_hist(h::AbstractSimHistory) = h[:r]
 info_hist(h::AbstractSimHistory) = h[:i]
-ainfo_hist(h::AbstractSimHistory) = h[:ai]
-uinfo_hist(h::AbstractSimHistory) = h[:ui]
+ainfo_hist(h::AbstractSimHistory) = h[:action_info]
+uinfo_hist(h::AbstractSimHistory) = h[:update_info]
 
 exception(h::SimHistory) = h.exception
 Base.backtrace(h::SimHistory) = h.backtrace
@@ -91,7 +91,7 @@ end
 hist(it::HistoryIterator) = it.history
 spec(it::HistoryIterator) = typeof(it).parameters[2]
 
-HistoryIterator(h::AbstractSimHistory, spec) = HistoryIterator{typeof(h), convert_spec(spec)}(h)
+HistoryIterator(h::AbstractSimHistory, spec) = HistoryIterator{typeof(h), convert_spec(spec, POMDP)}(h)
 
 """
     for t in eachstep(hist, [spec])
@@ -119,19 +119,23 @@ The possible valid elements in the iteration specification are
 - Any node in the (PO)MDP Dynamic Decision network (by default `:s`, `:a`, `:sp`, `:o`, `:r`)
 - `b` - the initial belief in the step (for POMDPs only)
 - `bp` - the belief after being updated based on `o` (for POMDPs only)
-- `ai` - info from the policy decision (from `action_info`)
-- `ui` - info from the belief update (from `update_info`)
+- `action_info` - info from the policy decision (from `action_info`)
+- `update_info` - info from the belief update (from `update_info`)
 - `t` - the timestep index
 """
 eachstep(hist::AbstractSimHistory, spec) = HistoryIterator(hist, spec)
 eachstep(mh::AbstractSimHistory) = mh
 
-function step_tuple(it::HistoryIterator, i::Int)
-    if isa(spec(it), Tuple)
-        return NamedTupleTools.select(hist(it)[i], spec(it))
-    else
-        @assert isa(spec(it), Symbol) "Output specification $(spec(it)) was not a Tuple or Symbol"
-        return hist(it)[i][spec(it)]
+@generated function step_tuple(it::HistoryIterator{<:Any, SPEC}, i::Int) where SPEC
+    # the only reason this is generated is to check for :ai and :ui - can get rid of in v0.4
+    newspec = Meta.quot(fixdeps(SPEC))
+    quote
+        if isa($newspec, Tuple)
+            return NamedTupleTools.select(hist(it)[i], $newspec)
+        else
+            @assert isa(spec(it), Symbol) "Output specification $(spec(it)) was not a Tuple or Symbol"
+            return hist(it)[i][spec(it)]
+        end
     end
 end
 

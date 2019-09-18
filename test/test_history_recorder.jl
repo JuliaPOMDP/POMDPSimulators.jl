@@ -40,7 +40,7 @@ for tuple in r1
     @test length(tuple) == length(POMDPSimulators.default_spec(problem))
 end
 
-for ui in eachstep(r2, "ui")
+for ui in eachstep(r2, "update_info")
     @test ui == nothing
 end
 
@@ -93,7 +93,7 @@ hv = view(r1, 2:length(r1))
 # iterators
 rsum = 0.0
 len = 0
-for (s, a, r, sp, ai, t) in eachstep(hv, (:s,:a,:r,:sp,:ai,:t))
+for (s, a, r, sp, ai, t) in eachstep(hv, (:s,:a,:r,:sp,:action_info,:t))
     @test isa(s, statetype(problem))
     @test isa(a, actiontype(problem))
     @test isa(r, Float64)
@@ -128,7 +128,7 @@ println("Should be a progress bar below:")
 
 # test capture_exception
 gw = SimpleGridWorld()
-hr = HistoryRecorder(show_progress=true, capture_exception=true, max_steps=100)
+hr = HistoryRecorder(show_progress=true, capture_exception=true, max_steps=100, rng=MersenneTwister(2))
 counter = []
 error_policy = FunctionPolicy(function (s)
                                   push!(counter, true)
@@ -140,7 +140,7 @@ error_policy = FunctionPolicy(function (s)
                                   end
                               end)
 println("Should be a progress bar below:")
-exhist = simulate(hr, gw, error_policy, initialstate(gw, sim.rng))
+exhist = simulate(hr, gw, error_policy, initialstate(gw, hr.rng))
 @test 2 <= length(exhist) <= 10
 @test exception(exhist) !== nothing
 
