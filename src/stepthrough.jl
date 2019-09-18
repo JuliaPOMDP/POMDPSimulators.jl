@@ -177,7 +177,7 @@ end
 function stepthrough(mdp::MDP{S},
                      policy::Policy,
                      init_state::S,
-                     spec::Union{String, Tuple, Symbol}=default_spec(pomdp);
+                     spec::Union{String, Tuple, Symbol}=default_spec(mdp);
                      kwargs...) where {S}
     sim = StepSimulator(spec; kwargs...)
     return simulate(sim, mdp, policy, init_state)

@@ -80,3 +80,24 @@ struct SymPOMDP <: POMDP{Symbol, Symbol, Symbol} end
     m = SymPOMDP()
     @test_throws ErrorException stepthrough(m, RandomPolicy(m), NothingUpdater(), [:init], :init)
 end
+
+@testset "default spec MDP" begin
+    m = SimpleGridWorld()
+    hist = collect(stepthrough(m, RandomPolicy(m), max_steps=10))
+    @test hist isa AbstractVector
+    @test all(isa.(hist, NamedTuple))
+    @test length(hist) <= 10
+    
+    hist = collect(stepthrough(m, RandomPolicy(m), first(states(m)), max_steps=10))
+    @test hist isa AbstractVector
+    @test all(isa.(hist, NamedTuple))
+    @test length(hist) <= 10
+end
+
+@testset "default spec POMDP" begin
+    m = BabyPOMDP()
+    hist = collect(stepthrough(m, RandomPolicy(m), max_steps=10))
+    @test hist isa AbstractVector
+    @test all(isa.(hist, NamedTuple))
+    @test length(hist) <= 10
+end
