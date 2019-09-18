@@ -1,10 +1,14 @@
 # Histories
 
-The results produced by [`HistoryRecorder`](@ref)s and the [`sim`](@ref) function are contained in `SimHistory` objects. A `SimHistory` is an `AbstractVector` of [`NamedTuple`](https://docs.julialang.org/en/v1/manual/types/index.html#Named-Tuple-Types-1)s that each represent a step of the simulation. 
+The results produced by [`HistoryRecorder`](@ref)s and the [`sim`](@ref) function are contained in `SimHistory` objects.
+
+```@docs
+SimHistory
+```
 
 ## Examples
 
-```jldoctest histaccess
+```jldoctest histaccess; output = false
 using POMDPSimulators, POMDPs, POMDPModels, POMDPPolicies
 hr = HistoryRecorder(max_steps=10)
 hist = simulate(hr, BabyPOMDP(), FunctionPolicy(x->true))
@@ -56,12 +60,3 @@ will produce a vector of the distances traveled on each step (assuming the state
 `state_hist(h)`, `action_hist(h)`, `observation_hist(h)` `belief_hist(h)`, and `reward_hist(h)` will return vectors of the states, actions, and rewards, and `undiscounted_reward(h)` and `discounted_reward(h)` will return the total rewards collected over the trajectory. `n_steps(h)` returns the number of steps in the history. `exception(h)` and `backtrace(h)` can be used to hold an exception if the simulation failed to finish.
 
 `view(h, range)` (e.g. `view(h, 1:n_steps(h)-4)`) can be used to create a view of the history object `h` that only contains a certain range of steps. The object returned by `view` is a `SimHistory` that can be iterated through and manipulated just like a complete `SimHistory`.
-
-## Concrete Types
-
-There are two concrete types of `SimHistory` depending on whether the problem was an MDP or a POMDP.
-
-```@docs
-MDPHistory
-POMDPHistory
-```

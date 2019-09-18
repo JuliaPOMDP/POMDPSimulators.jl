@@ -11,7 +11,7 @@ nt_type(h::AbstractSimHistory) = nt_type(typeof(h))
 
 An (PO)MDP simulation history returned by `simulate(::HistoryRecorder, ::Union{MDP,POMDP},...)`.
 
-This is an `AbstractVector` of `NamedTuples` containing the states, actions, etc.
+This is an `AbstractVector` of [`NamedTuples`](https://docs.julialang.org/en/v1/manual/types/index.html#Named-Tuple-Types-1) containing the states, actions, etc.
 
 # Examples
 ```
@@ -116,7 +116,7 @@ end
 ```
 
 The possible valid elements in the iteration specification are
-- Any node in the (PO)MDP Dynamic Decision network (by default :s, :a, :sp, :o, :r)
+- Any node in the (PO)MDP Dynamic Decision network (by default `:s`, `:a`, `:sp`, `:o`, `:r`)
 - `b` - the initial belief in the step (for POMDPs only)
 - `bp` - the belief after being updated based on `o` (for POMDPs only)
 - `ai` - info from the policy decision (from `action_info`)
