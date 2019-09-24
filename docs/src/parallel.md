@@ -6,11 +6,13 @@ POMDPSimulators contains a utility for running many Monte Carlo simulations in p
 2. Use the [`run_parallel`](@ref) or [`run`](@ref) function to run the simulations.
 3. Analyze the results of the simulations contained in the [`DataFrame`](https://github.com/JuliaData/DataFrames.jl) returned by [`run_parallel`](@ref).
 
-An extended example is shown below [TODO: move this to POMDPExamples].
+## Example
 
-By default, only the discounted rewards from each simulation are recorded, but arbitrary information can be recorded as described in the next section.
+An example can be found in the [POMDPExamples Package](https://github.com/JuliaPOMDP/POMDPExamples.jl/blob/master/notebooks/Running-Simulations.ipynb).
 
 ## Specifying information to be recorded
+
+By default, only the discounted rewards from each simulation are recorded, but arbitrary information can be recorded.
 
 The [`run_parallel`](@ref) and [`run`](@ref) functions accept a function (normally specified via the [`do` syntax](https://docs.julialang.org/en/v1/manual/functions/#Do-Block-Syntax-for-Function-Arguments-1)) that takes the [`Sim`](@ref) object and [history](@ref Histories) of the simulation and extracts relevant statistics as a named tuple. For example, if the desired characteristics are the number of steps in the simulation and the reward, [`run_parallel`](@ref) would be invoked as follows:
 ```julia
@@ -23,11 +25,6 @@ These statistics are combined into a [`DataFrame`](https://github.com/JuliaData/
 mean(df[:reward]./df[:n_steps])
 ```
 would compute the average reward per step with each simulation weighted equally regardless of length.
-
-
-## Example
-
-Examples can be found in the [POMDPExamples Package](https://github.com/JuliaPOMDP/POMDPExamples.jl/blob/master/notebooks/Running-Simulations.ipynb)
 
 ## Sim objects
 
