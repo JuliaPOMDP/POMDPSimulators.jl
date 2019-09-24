@@ -10,22 +10,6 @@ POMDPSimulators contains a utility for running many Monte Carlo simulations in p
 
 An example can be found in the [POMDPExamples Package](https://github.com/JuliaPOMDP/POMDPExamples.jl/blob/master/notebooks/Running-Simulations.ipynb).
 
-## Specifying information to be recorded
-
-By default, only the discounted rewards from each simulation are recorded, but arbitrary information can be recorded.
-
-The [`run_parallel`](@ref) and [`run`](@ref) functions accept a function (normally specified via the [`do` syntax](https://docs.julialang.org/en/v1/manual/functions/#Do-Block-Syntax-for-Function-Arguments-1)) that takes the [`Sim`](@ref) object and [history](@ref Histories) of the simulation and extracts relevant statistics as a named tuple. For example, if the desired characteristics are the number of steps in the simulation and the reward, [`run_parallel`](@ref) would be invoked as follows:
-```julia
-df = run_parallel(queue) do sim::Sim, hist::SimHistory
-    return (n_steps=n_steps(hist), reward=discounted_reward(hist))
-end
-```
-These statistics are combined into a [`DataFrame`](https://github.com/JuliaData/DataFrames.jl), with each line representing a single simulation, allowing for statistical analysis. For example,
-```julia
-mean(df[:reward]./df[:n_steps])
-```
-would compute the average reward per step with each simulation weighted equally regardless of length.
-
 ## Sim objects
 
 Each simulation should be specified by a [`Sim`](@ref) object which contains all the information needed to run a simulation, including the `Simulator`, `POMDP` or `MDP`, `Policy`, `Updater`, and any other ingredients.
@@ -47,3 +31,19 @@ The `run` function is also provided to run simulations in serial (this is often 
 ```@docs
 run
 ```
+
+## Specifying information to be recorded
+
+By default, only the discounted rewards from each simulation are recorded, but arbitrary information can be recorded.
+
+The [`run_parallel`](@ref) and [`run`](@ref) functions accept a function (normally specified via the [`do` syntax](https://docs.julialang.org/en/v1/manual/functions/#Do-Block-Syntax-for-Function-Arguments-1)) that takes the [`Sim`](@ref) object and [history](@ref Histories) of the simulation and extracts relevant statistics as a named tuple. For example, if the desired characteristics are the number of steps in the simulation and the reward, [`run_parallel`](@ref) would be invoked as follows:
+```julia
+df = run_parallel(queue) do sim::Sim, hist::SimHistory
+    return (n_steps=n_steps(hist), reward=discounted_reward(hist))
+end
+```
+These statistics are combined into a [`DataFrame`](https://github.com/JuliaData/DataFrames.jl), with each line representing a single simulation, allowing for statistical analysis. For example,
+```julia
+mean(df[:reward]./df[:n_steps])
+```
+would compute the average reward per step with each simulation weighted equally regardless of length.
