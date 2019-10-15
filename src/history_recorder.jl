@@ -34,7 +34,7 @@ mutable struct HistoryRecorder <: Simulator
 end
 
 # This is the only stable constructor
-function HistoryRecorder(;rng=MersenneTwister(rand(UInt32)),
+function HistoryRecorder(;rng=Random.GLOBAL_RNG,
                           eps=nothing,
                           max_steps=nothing,
                           capture_exception=false,
