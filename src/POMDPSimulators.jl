@@ -17,6 +17,7 @@ include("rollout.jl")
 
 export
     SimHistory,
+    AbstractSimHistory,
     HistoryIterator,
     eachstep,
     state_hist,
