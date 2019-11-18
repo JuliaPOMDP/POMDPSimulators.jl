@@ -7,4 +7,13 @@ Examples can be found in the [simulation tutorial in the POMDPExamples package](
 If you are just getting started, probably the easiest way to begin is the [`stepthrough` function](@ref Stepping-through). Otherwise, consult the [Which Simulator Should I Use?](@ref) page.
 
 ```@contents
+Pages = ["index.md",
+         "which.md",
+         "rollout.md",
+         "parallel.md",
+         "history_recorder.md",
+         "histories.md",
+         "stepthrough.md",
+         "display.md",
+         "sim.md"]
 ```
