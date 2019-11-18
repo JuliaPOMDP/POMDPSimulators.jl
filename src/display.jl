@@ -58,7 +58,7 @@ function simulate(sim::DisplaySimulator, m, args...)
     dt = 1/sim.max_fps
     tm = time()
     isinitial = true
-    last = NamedTuple()
+    last = NamedTuple() # for extra_final
 
     for step in simulate(sim.stepsim, m, args...)
         if isinitial && sim.extra_initial
@@ -75,7 +75,7 @@ function simulate(sim::DisplaySimulator, m, args...)
         disc *= discount(m)
         sleep_until(tm += dt)
 
-        last = step
+        last = step # save for extra final
     end
 
     if sim.extra_final
@@ -104,7 +104,6 @@ finalstep(m::POMDP, last) = (done=true,
                              t=get(last, :t, missing) + 1,
                              s=get(last, :sp, missing),
                              b=get(last, :bp, missing))
-
 
 function perform_display(sim::DisplaySimulator, vis)
     sim.predisplay(sim.display)
