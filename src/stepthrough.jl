@@ -1,7 +1,7 @@
 # StepSimulator
 # maintained by @zsunberg
 
-mutable struct StepSimulator <: Simulator
+struct StepSimulator <: Simulator
     rng::AbstractRNG
     max_steps::Union{Nothing,Any}
     spec
@@ -11,7 +11,7 @@ function StepSimulator(spec; rng=Random.GLOBAL_RNG, max_steps=nothing)
 end
 
 function simulate(sim::StepSimulator, mdp::MDP{S}, policy::Policy, init_state::S=initialstate(mdp, sim.rng)) where {S}
-    symtuple = convert_spec(sim.spec, MDP)
+    symtuple = convert_spec(sim.spec, typeof(mdp))
     max_steps = something(sim.max_steps, typemax(Int64))
     return MDPSimIterator(symtuple, mdp, policy, sim.rng, init_state, max_steps)
 end
@@ -23,7 +23,7 @@ end
 
 function simulate(sim::StepSimulator, pomdp::POMDP, policy::Policy, bu::Updater, dist::Any, is=initialstate(pomdp, sim.rng))
     initial_belief = initialize_belief(bu, dist)
-    symtuple = convert_spec(sim.spec, POMDP)
+    symtuple = convert_spec(sim.spec, typeof(pomdp))
     max_steps = something(sim.max_steps, typemax(Int64))
     return POMDPSimIterator(symtuple, pomdp, policy, bu, sim.rng, initial_belief, is, max_steps)
 end
@@ -166,8 +166,20 @@ end
 
 convert_spec(spec::Symbol) = spec
 
-default_spec(m::MDP) = tuple(nodenames(DDNStructure(m))..., :t, :action_info)
-default_spec(m::POMDP) = tuple(nodenames(DDNStructure(m))..., :t, :action_info, :b, :bp, :update_info)
+"""
+    CompleteSpec()
+
+Default placeholder for a complete step output specification. Will include all DDNNodes, plus all known possible outputs in each step.
+"""
+struct CompleteSpec end
+
+convert_spec(::CompleteSpec, T::Type{M}) where M <: MDP = default_spec(T)
+convert_spec(::CompleteSpec, T::Type{M}) where M <: POMDP = default_spec(T)
+
+default_spec(m::Union{MDP,POMDP}) = default_spec(typeof(m))
+default_spec(T::Type{M}) where M <: MDP = tuple(nodenames(DDNStructure(T))..., :t, :action_info)
+default_spec(T::Type{M}) where M <: POMDP = tuple(nodenames(DDNStructure(T))..., :t, :action_info, :b, :bp, :update_info)
+
 
 """
     stepthrough(problem, policy, [spec])

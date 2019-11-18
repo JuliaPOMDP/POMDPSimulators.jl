@@ -54,4 +54,8 @@ export
     problem
 include("parallel.jl")
 
+export
+    DisplaySimulator
+include("display.jl")
+
 end # module
