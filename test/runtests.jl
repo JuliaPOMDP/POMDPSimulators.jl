@@ -21,3 +21,6 @@ end
 @testset "parallel" begin
     include("test_parallel.jl")
 end
+@testset "display" begin
+    include("test_display.jl")
+end

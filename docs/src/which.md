@@ -18,12 +18,12 @@ Use the [History Recorder](@ref History-Recorder).
 
 Use the [`stepthrough` function](@ref Stepping-through).
 
+## I want to visualize a simulation.
+
+Use the [`DisplaySimulator`](@ref Display).
+
+Also see the [POMDPGifs package](https://github.com/JuliaPOMDP/POMDPGifs.jl) for creating gif animations.
+
 ## I want to interact with a MDP or POMDP environment from the policy's perspective
 
 Use the [`sim` function](@ref sim-function).
-
-## I want to visualize a simulation.
-
-Visualization is not implemented directly in this package. However, the [Blink POMDP Simulator package](https://github.com/JuliaPOMDP/BlinkPOMDPSimulator.jl) contains a simulator for real-time visualization, and the [POMDPGifs package](https://github.com/JuliaPOMDP/POMDPGifs.jl) includes tools for creating gif animations. Additionally, histories produced by a [`HistoryRecorder`](@ref) or [`sim`](@ref) are can be visualized using the [`render`](https://juliapomdp.github.io/POMDPModelTools.jl/latest/visualization.html#POMDPModelTools.render) function from [POMDPModelTools](https://github.com/JuliaPOMDP/POMDPModelTools.jl).
-
-See the [Visualization Tutorial in POMDPExamples](https://github.com/JuliaPOMDP/POMDPExamples.jl) for more info.
