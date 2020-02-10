@@ -1,5 +1,8 @@
 """
-Represents everything needed to run and record a single simulation, including model, initial conditions, and metadata.
+    Sim(m::MDP, p::Policy[, initialstate]; kwargs...)
+    Sim(m::POMDP, p::Policy[, updater[, initial_belief[, initialstate]]]; kwargs...)
+
+Create a Sim object that contains everything needed to run and record a single simulation, including model, initial conditions, and metadata.
 
 A vector of `Sim` objects can be executed with [`run`](@ref) or [`run_parallel`](@ref).
 
@@ -34,8 +37,8 @@ end
 problem(sim::MDPSim) = sim.mdp
 
 """
-    Sim(p::POMDP, policy::Policy, metadata=(note="a note",))
-    Sim(p::POMDP, policy::Policy[, updater[, initial_belief[, initialstate]]]; kwargs...)
+    Sim(m::POMDP, p::Policy, metadata=(note="a note",))
+    Sim(m::POMDP, p::Policy[, updater[, initial_belief[, initialstate]]]; kwargs...)
 
 Create a `Sim` object that represents a POMDP simulation.
 """
@@ -59,8 +62,8 @@ function Sim(pomdp::POMDP,
 end
 
 """
-    Sim(p::MDP, policy::Policy, metadata=(note="a note",))
-    Sim(p::MDP, policy::Policy[, initialstate]; kwargs...)
+    Sim(m::MDP, p::Policy, metadata=(note="a note",))
+    Sim(m::MDP, p::Policy[, initialstate]; kwargs...)
 
 Create a `Sim` object that represents a MDP simulation.
 """
