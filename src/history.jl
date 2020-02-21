@@ -21,10 +21,10 @@ hist[1][:s] # returns the first state in the history
 hist[:a] # returns all of the actions in the history
 ```
 """
-struct SimHistory{NT} <: AbstractSimHistory{NT}
+struct SimHistory{NT, R<:Real} <: AbstractSimHistory{NT}
     hist::Vector{NT}
 
-    discount::Float64
+    discount::R
 
     # if an exception is captured, it will be stored here
     exception::Union{Nothing, Exception}
