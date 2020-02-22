@@ -87,7 +87,7 @@ end
 POMDPs.simulate(s::POMDPSim) = simulate(s.simulator, s.pomdp, s.policy, s.updater, s.initial_belief, s.initialstate)
 POMDPs.simulate(s::MDPSim) = simulate(s.simulator, s.mdp, s.policy, s.initialstate)
 
-default_process(s::Sim, r::Float64) = (reward=r,)
+default_process(s::Sim, r::Real) = (reward=r,)
 default_process(s::Sim, hist::SimHistory) = default_process(s, discounted_reward(hist))
 
 run_parallel(queue::AbstractVector; kwargs...) = run_parallel(default_process, queue; kwargs...)
