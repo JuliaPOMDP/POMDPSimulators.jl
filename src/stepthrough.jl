@@ -98,37 +98,14 @@ function Base.iterate(it::POMDPSimIterator, is::Tuple{Int,S,B} = (1, it.init_sta
     return (out_tuple(it, nt), (t+1, nt.sp, nt.bp))
 end
 
-@generated function out_tuple(it::Union{MDPSimIterator{spec}, POMDPSimIterator{spec}}, all::NamedTuple) where spec
-    # the only reason this is generated is to check for :ai and :ui - can get rid of in v0.4
-    newspec = Meta.quot(fixdeps(spec))
-    quote
-        if isa($newspec, Tuple)
-            return NamedTupleTools.select(all, $newspec)
-        else 
-            @assert isa(spec, Symbol) "Invalid specification: $spec is not a Symbol or Tuple."
-            return all[spec]
-        end
+function out_tuple(it::Union{MDPSimIterator{spec}, POMDPSimIterator{spec}}, all::NamedTuple) where spec
+    if isa(spec, Tuple)
+        return NamedTupleTools.select(all, spec)
+    else 
+        @assert isa(spec, Symbol) "Invalid specification: $spec is not a Symbol or Tuple."
+        return all[spec]
     end
 end
-
-# XXX can get rid of in v0.4
-function fixdeps(tpl::Tuple)
-    fixed = []
-    for s in tpl
-        if s == :ai && !(:action_info in tpl)
-            @warn("Automatically switching :ai to :action_info. To disable this switch (e.g. if you have an :ai node in your DDN), also include :action_info in your output spec.")
-            push!(fixed, :action_info)
-        elseif s == :ui && !(:update_info in tpl)
-            @warn("Automatically switching :ui to :update_info. To disable this switch (e.g. if you have an :ui node in your DDN), also include :update_info in your output spec.")
-            push!(fixed, :update_info)
-        else
-            push!(fixed, s)
-        end
-    end
-    return tuple(fixed...)
-end
-# if there's just one symbol, don't worry about checking for :ai and :ui
-fixdeps(s::Symbol) = s
 
 convert_spec(spec, T::Type{M}) where {M<:POMDP} = convert_spec(spec, union(Set(nodenames(DDNStructure(T))), Set(tuple(:bp, :b, :action_info, :update_info, :t))))
 convert_spec(spec, T::Type{M}) where {M<:MDP} = convert_spec(spec, union(Set(nodenames(DDNStructure(T))), Set(tuple(:action_info, :t))))
