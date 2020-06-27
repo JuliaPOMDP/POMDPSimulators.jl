@@ -107,7 +107,7 @@ function simulate(sim::RolloutSimulator, pomdp::POMDP, policy::Policy, updater::
 
         a = action(policy, b)
 
-        sp, o, r = gen(DDNOut(:sp,:o,:r), pomdp, s, a, sim.rng)
+        sp, o, r = @gen(:sp,:o,:r)(pomdp, s, a, sim.rng)
 
         r_total += disc*r
 
@@ -166,7 +166,7 @@ function simulate(sim::RolloutSimulator, mdp::Union{MDP{S}, POMDP{S}}, policy::P
     while disc > eps && !isterminal(mdp, s) && step <= max_steps
         a = action(policy, s)
 
-        sp, r = gen(DDNOut(:sp,:r), mdp, s, a, sim.rng)
+        sp, r = @gen(:sp,:r)(mdp, s, a, sim.rng)
 
         r_total += disc*r
 
