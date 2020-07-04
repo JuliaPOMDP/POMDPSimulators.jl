@@ -105,8 +105,8 @@ function out_tuple(it::Union{MDPSimIterator{spec}, POMDPSimIterator{spec}}, all:
     end
 end
 
-convert_spec(spec, T::Type{M}) where {M<:POMDP} = convert_spec(spec, Set(tuple(:sp, :o, :r, :info, :bp, :b, :action_info, :update_info, :t)))
-convert_spec(spec, T::Type{M}) where {M<:MDP} = convert_spec(spec, Set(tuple(:sp, :r, :info, :action_info, :t)))
+convert_spec(spec, T::Type{M}) where {M<:POMDP} = convert_spec(spec, Set(tuple(:s, :a, :sp, :o, :r, :info, :bp, :b, :action_info, :update_info, :t)))
+convert_spec(spec, T::Type{M}) where {M<:MDP} = convert_spec(spec, Set(tuple(:s, :a, :sp, :r, :info, :action_info, :t)))
 function convert_spec(spec, recognized::Set{Symbol})
     conv = convert_spec(spec)
     convtpl = isa(conv, Tuple) ? conv : tuple(conv)
@@ -151,8 +151,8 @@ convert_spec(::CompleteSpec, T::Type{M}) where M <: MDP = default_spec(T)
 convert_spec(::CompleteSpec, T::Type{M}) where M <: POMDP = default_spec(T)
 
 default_spec(m::Union{MDP,POMDP}) = default_spec(typeof(m))
-default_spec(T::Type{M}) where M <: MDP = tuple(:sp, :r, :info, :t, :action_info)
-default_spec(T::Type{M}) where M <: POMDP = tuple(:sp, :o, :r, :info, :t, :action_info, :b, :bp, :update_info)
+default_spec(T::Type{M}) where M <: MDP = tuple(:s, :a, :sp, :r, :info, :t, :action_info)
+default_spec(T::Type{M}) where M <: POMDP = tuple(:s, :a, :sp, :o, :r, :info, :t, :action_info, :b, :bp, :update_info)
 
 
 """
