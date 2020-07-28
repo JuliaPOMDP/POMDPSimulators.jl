@@ -5,7 +5,7 @@
     policy = solve(solver, p)
     sim = StepSimulator("s,sp,r,a,action_info", rng=MersenneTwister(3), max_steps=100)
     n_steps = 0
-    for (s, sp, r, a, ai) in simulate(sim, p, policy)
+    for (s, sp, r, a, ai) in simulate(sim, p, policy, GridWorldState(1,1))
         @test isa(s, statetype(p))
         @test isa(sp, statetype(p))
         @test isa(r, Float64)
@@ -16,7 +16,7 @@
     @test n_steps <= 100
 
     n_steps = 0
-    for s in stepthrough(p, policy, "s", rng=MersenneTwister(4), max_steps=100)
+    for s in stepthrough(p, policy, GridWorldState(1,1), "s", rng=MersenneTwister(4), max_steps=100)
         @test isa(s, statetype(p))
         n_steps += 1
     end

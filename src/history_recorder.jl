@@ -79,7 +79,7 @@ function simulate(sim::HistoryRecorder,
                            policy::Policy,
                            bu::Updater,
                            initialstate_dist::Any,
-                           is::Any=initialstate(pomdp, sim.rng)
+                           is::Any=rand(sim.rng, initialstate(pomdp))
                   ) where {S,A,O}
 
     initial_belief = initialize_belief(bu, initialstate_dist)

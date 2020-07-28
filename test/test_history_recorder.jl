@@ -3,7 +3,7 @@ problem = BabyPOMDP()
 policy = RandomPolicy(problem, rng=MersenneTwister(2))
 steps=10
 sim = HistoryRecorder(max_steps=steps, rng=MersenneTwister(3))
-@show_requirements simulate(sim, problem, policy, updater(policy), initialstate_distribution(problem))
+POMDPLinter.@show_requirements simulate(sim, problem, policy, updater(policy), initialstate_distribution(problem))
 r1 = simulate(sim, problem, policy, updater(policy), initialstate_distribution(problem))
 policy.rng = MersenneTwister(2)
 Random.seed!(sim.rng, 3)
@@ -58,7 +58,7 @@ problem = LegacyGridWorld()
 policy = RandomPolicy(problem, rng=MersenneTwister(2))
 steps=10
 sim = HistoryRecorder(max_steps=steps, rng=MersenneTwister(3))
-@show_requirements simulate(sim, problem, policy, initialstate(problem, sim.rng))
+POMDPLinter.@show_requirements simulate(sim, problem, policy, initialstate(problem, sim.rng))
 r1 = simulate(sim, problem, policy, initialstate(problem, sim.rng))
 
 @test length(state_hist(r1)) <= steps + 1 # less than or equal because it may reach the goal too fast
@@ -124,7 +124,7 @@ hi = HistoryIterator(hv, :r)
 gw = SimpleGridWorld()
 hr = HistoryRecorder(show_progress=true, max_steps=100)
 println("Should be a progress bar below:")
-@test length(simulate(hr, gw, FunctionPolicy(s->:left), initialstate(gw, sim.rng))) <= 100
+@test length(simulate(hr, gw, FunctionPolicy(s->:left), rand(hr.rng, initialstate(gw)))) <= 100
 
 # test capture_exception
 gw = SimpleGridWorld()
@@ -140,14 +140,14 @@ error_policy = FunctionPolicy(function (s)
                                   end
                               end)
 println("Should be a progress bar below:")
-exhist = simulate(hr, gw, error_policy, initialstate(gw, hr.rng))
+exhist = simulate(hr, gw, error_policy, rand(hr.rng, initialstate(gw)))
 @test 2 <= length(exhist) <= 10
 @test exception(exhist) !== nothing
 
 # test showprogress without max_steps
 gw = SimpleGridWorld()
 hr = HistoryRecorder(show_progress=true)
-@test_throws ErrorException simulate(hr, gw, FunctionPolicy(s->:left), initialstate(gw, sim.rng))
+@test_throws ErrorException simulate(hr, gw, FunctionPolicy(s->:left), rand(hr.rng, initialstate(gw)))
 
 #=
 function f(hv)
