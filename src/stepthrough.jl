@@ -10,18 +10,18 @@ function StepSimulator(spec; rng=Random.GLOBAL_RNG, max_steps=nothing)
     return StepSimulator(rng, max_steps, spec)
 end
 
-function simulate(sim::StepSimulator, mdp::MDP{S}, policy::Policy, init_state::S=initialstate(mdp, sim.rng)) where {S}
+function simulate(sim::StepSimulator, mdp::MDP{S}, policy::Policy, init_state::S=rand(sim.rng, initialstate(mdp))) where {S}
     symtuple = convert_spec(sim.spec, typeof(mdp))
     max_steps = something(sim.max_steps, typemax(Int64))
     return MDPSimIterator(symtuple, mdp, policy, sim.rng, init_state, max_steps)
 end
 
 function simulate(sim::StepSimulator, pomdp::POMDP, policy::Policy, bu::Updater=updater(policy))
-    dist = initialstate_distribution(pomdp)    
+    dist = initialstate(pomdp)    
     return simulate(sim, pomdp, policy, bu, dist)
 end
 
-function simulate(sim::StepSimulator, pomdp::POMDP, policy::Policy, bu::Updater, dist::Any, is=initialstate(pomdp, sim.rng))
+function simulate(sim::StepSimulator, pomdp::POMDP, policy::Policy, bu::Updater, dist::Any, is=rand(sim.rng, initialstate(pomdp)))
     initial_belief = initialize_belief(bu, dist)
     symtuple = convert_spec(sim.spec, typeof(pomdp))
     max_steps = something(sim.max_steps, typemax(Int64))

@@ -1,7 +1,7 @@
 
 @testset "GridWorld sim" begin 
     mdp = LegacyGridWorld(terminals=Set())
-    hist = sim(mdp, max_steps=100) do state
+    hist = sim(mdp, initialstate=GridWorldState(1,1), max_steps=100) do state
         @assert isa(state, GridWorldState)    
         acts = actions(mdp)
         return rand(acts)

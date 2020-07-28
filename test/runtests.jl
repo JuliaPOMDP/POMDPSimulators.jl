@@ -5,6 +5,7 @@ using BeliefUpdaters
 using Random
 using Test
 using POMDPSimulators
+import POMDPLinter
 
 @testset "rollout" begin
     include("test_rollout.jl")

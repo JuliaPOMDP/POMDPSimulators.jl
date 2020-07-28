@@ -9,6 +9,7 @@ using POMDPModelTools
 using BeliefUpdaters
 using Distributed
 using NamedTupleTools
+import POMDPLinter: @POMDP_require, @req, @subreq, implemented
 
 import POMDPs: simulate, discount
 

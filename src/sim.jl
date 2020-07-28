@@ -48,7 +48,7 @@ for a POMDP and a belief updater.
 
 ## POMDP version
 
-- `initialobs`: this will control the initial observation given to the policy function. If this is not defined, `initialobs(m, s, rng)` will be used if it is available. If it is not, `missing` will be used.
+- `initialobs`: this will control the initial observation given to the policy function. If this is not defined, `rand(initialobs(m, s))` will be used if it is available. If it is not, `missing` will be used.
 
 ## POMDP and updater version
 
@@ -96,26 +96,26 @@ function sim(polfunc::Function, pomdp::POMDP;
 end
 
 function sim(polfunc::Function, pomdp::POMDP, updater::Updater;
-             initialstate=nothing,
+             is=nothing,
              simulator=nothing,
-             initialbelief=initialstate_distribution(pomdp),
+             initialbelief=initialstate(pomdp),
              kwargs...
             )
 
     kwargd = Dict(kwargs)
-    if initialstate==nothing && statetype(pomdp) != Nothing
-        initialstate = default_init_state(pomdp)
+    if is==nothing && statetype(pomdp) != Nothing
+        is = default_init_state(pomdp)
     end
     if simulator==nothing
         simulator = HistoryRecorder(;kwargd...)
     end
     policy = FunctionPolicy(polfunc)
-    simulate(simulator, pomdp, policy, updater, initialbelief, initialstate)
+    simulate(simulator, pomdp, policy, updater, initialbelief, is)
 end
 
 function default_init_obs(p::POMDP, s)
     try
-        return initialobs(p, s, Random.GLOBAL_RNG)
+        return rand(initialobs(p, s))
     catch ex
         if ex isa MethodError
             return missing
@@ -127,7 +127,7 @@ end
 
 @generated function default_init_state(p::Union{MDP,POMDP})
     if implemented(initialstate, Tuple{p, typeof(Random.GLOBAL_RNG)})
-        return :(initialstate(p, Random.GLOBAL_RNG))
+        return :(rand(Random.GLOBAL_RNG, initialstate(p)))
     else
         return quote
             error("""
