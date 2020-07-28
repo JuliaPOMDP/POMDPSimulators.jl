@@ -49,9 +49,8 @@ function Base.iterate(it::MDPSimIterator, is::Tuple{Int, S}=(1, it.init_state)) 
     t = is[1]
     s = is[2]
     a, ai = action_info(it.policy, s)
-    on = outputnames(DDNStructure(it.mdp))
-    out = gen(DDNOut(on), it.mdp, s, a, it.rng)
-    nt = merge(namedtuple(on, out), (t=t, s=s, a=a, action_info=ai))
+    out = @gen(:sp,:r,:info)(it.mdp, s, a, it.rng)
+    nt = merge(NamedTuple{(:sp,:r,:info)}(out), (t=t, s=s, a=a, action_info=ai))
     return (out_tuple(it, nt), (t+1, nt.sp))
 end
 
@@ -90,49 +89,24 @@ function Base.iterate(it::POMDPSimIterator, is::Tuple{Int,S,B} = (1, it.init_sta
     s = is[2]
     b = is[3]
     a, ai = action_info(it.policy, b)
-    on = outputnames(DDNStructure(it.pomdp))
-    out = gen(DDNOut(on), it.pomdp, s, a, it.rng)
-    outnt = namedtuple(on, out)
+    out = @gen(:sp,:o,:r,:info)(it.pomdp, s, a, it.rng)
+    outnt = NamedTuple{(:sp,:o,:r,:info)}(out)
     bp, ui = update_info(it.updater, b, a, outnt.o)
     nt = merge(outnt, (t=t, b=b, s=s, a=a, action_info=ai, bp=bp, update_info=ui))
     return (out_tuple(it, nt), (t+1, nt.sp, nt.bp))
 end
 
-@generated function out_tuple(it::Union{MDPSimIterator{spec}, POMDPSimIterator{spec}}, all::NamedTuple) where spec
-    # the only reason this is generated is to check for :ai and :ui - can get rid of in v0.4
-    newspec = Meta.quot(fixdeps(spec))
-    quote
-        if isa($newspec, Tuple)
-            return NamedTupleTools.select(all, $newspec)
-        else 
-            @assert isa(spec, Symbol) "Invalid specification: $spec is not a Symbol or Tuple."
-            return all[spec]
-        end
+function out_tuple(it::Union{MDPSimIterator{spec}, POMDPSimIterator{spec}}, all::NamedTuple) where spec
+    if isa(spec, Tuple)
+        return NamedTupleTools.select(all, spec)
+    else 
+        @assert isa(spec, Symbol) "Invalid specification: $spec is not a Symbol or Tuple."
+        return all[spec]
     end
 end
 
-# XXX can get rid of in v0.4
-function fixdeps(tpl::Tuple)
-    fixed = []
-    for s in tpl
-        if s == :ai && !(:action_info in tpl)
-            @warn("Automatically switching :ai to :action_info. To disable this switch (e.g. if you have an :ai node in your DDN), also include :action_info in your output spec.")
-            push!(fixed, :action_info)
-        elseif s == :ui && !(:update_info in tpl)
-            @warn("Automatically switching :ui to :update_info. To disable this switch (e.g. if you have an :ui node in your DDN), also include :update_info in your output spec.")
-            push!(fixed, :update_info)
-        else
-            push!(fixed, s)
-        end
-    end
-    return tuple(fixed...)
-end
-# if there's just one symbol, don't worry about checking for :ai and :ui
-fixdeps(s::Symbol) = s
-
-convert_spec(spec, T::Type{M}) where {M<:POMDP} = convert_spec(spec, union(Set(nodenames(DDNStructure(T))), Set(tuple(:bp, :b, :action_info, :update_info, :t))))
-convert_spec(spec, T::Type{M}) where {M<:MDP} = convert_spec(spec, union(Set(nodenames(DDNStructure(T))), Set(tuple(:action_info, :t))))
-
+convert_spec(spec, T::Type{M}) where {M<:POMDP} = convert_spec(spec, Set(tuple(:s, :a, :sp, :o, :r, :info, :bp, :b, :action_info, :update_info, :t)))
+convert_spec(spec, T::Type{M}) where {M<:MDP} = convert_spec(spec, Set(tuple(:s, :a, :sp, :r, :info, :action_info, :t)))
 function convert_spec(spec, recognized::Set{Symbol})
     conv = convert_spec(spec)
     convtpl = isa(conv, Tuple) ? conv : tuple(conv)
@@ -177,8 +151,8 @@ convert_spec(::CompleteSpec, T::Type{M}) where M <: MDP = default_spec(T)
 convert_spec(::CompleteSpec, T::Type{M}) where M <: POMDP = default_spec(T)
 
 default_spec(m::Union{MDP,POMDP}) = default_spec(typeof(m))
-default_spec(T::Type{M}) where M <: MDP = tuple(nodenames(DDNStructure(T))..., :t, :action_info)
-default_spec(T::Type{M}) where M <: POMDP = tuple(nodenames(DDNStructure(T))..., :t, :action_info, :b, :bp, :update_info)
+default_spec(T::Type{M}) where M <: MDP = tuple(:s, :a, :sp, :r, :info, :t, :action_info)
+default_spec(T::Type{M}) where M <: POMDP = tuple(:s, :a, :sp, :o, :r, :info, :t, :action_info, :b, :bp, :update_info)
 
 
 """

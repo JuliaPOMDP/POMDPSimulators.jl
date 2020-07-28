@@ -126,16 +126,12 @@ The possible valid elements in the iteration specification are
 eachstep(hist::AbstractSimHistory, spec) = HistoryIterator(hist, spec)
 eachstep(mh::AbstractSimHistory) = mh
 
-@generated function step_tuple(it::HistoryIterator{<:Any, SPEC}, i::Int) where SPEC
-    # the only reason this is generated is to check for :ai and :ui - can get rid of in v0.4
-    newspec = Meta.quot(fixdeps(SPEC))
-    quote
-        if isa($newspec, Tuple)
-            return NamedTupleTools.select(hist(it)[i], $newspec)
-        else
-            @assert isa(spec(it), Symbol) "Output specification $(spec(it)) was not a Tuple or Symbol"
-            return hist(it)[i][spec(it)]
-        end
+function step_tuple(it::HistoryIterator{<:Any, SPEC}, i::Int) where SPEC
+    if isa(SPEC, Tuple)
+        return NamedTupleTools.select(hist(it)[i], SPEC)
+    else
+        @assert isa(spec(it), Symbol) "Output specification $(spec(it)) was not a Tuple or Symbol"
+        return hist(it)[i][spec(it)]
     end
 end
 

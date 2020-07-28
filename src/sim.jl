@@ -48,7 +48,7 @@ for a POMDP and a belief updater.
 
 ## POMDP version
 
-- `initialobs`: this will control the initial observation given to the policy function. If this is not defined, `gen(DDNNode{:o}, m, s, rng)` will be used if it is available. If it is not, `missing` will be used.
+- `initialobs`: this will control the initial observation given to the policy function. If this is not defined, `initialobs(m, s, rng)` will be used if it is available. If it is not, `missing` will be used.
 
 ## POMDP and updater version
 
@@ -114,10 +114,14 @@ function sim(polfunc::Function, pomdp::POMDP, updater::Updater;
 end
 
 function default_init_obs(p::POMDP, s)
-    if implemented(gen, Tuple{DDNNode{:o}, typeof(p), typeof(s), typeof(Random.GLOBAL_RNG)})
-        return gen(DDNNode(:o), p, s, Random.GLOBAL_RNG)
-    else
-        return missing
+    try
+        return initialobs(p, s, Random.GLOBAL_RNG)
+    catch ex
+        if ex isa MethodError
+            return missing
+        else
+            rethrow(ex)
+        end
     end
 end
 

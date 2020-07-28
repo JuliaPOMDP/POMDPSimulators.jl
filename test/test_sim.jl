@@ -13,7 +13,7 @@ end
 @testset "BabyPOMDP sim" begin 
     pomdp = BabyPOMDP()
 
-    POMDPs.generate_o(m::BabyPOMDP, s::Bool, rng::AbstractRNG) = false
+    POMDPs.initialobs(m::BabyPOMDP, s::Bool, rng::AbstractRNG) = false
     hist = sim(pomdp, max_steps=100) do obs
         @assert isa(obs, Bool)
         acts = actions(pomdp)
