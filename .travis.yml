@@ -1,12 +1,10 @@
 language: julia
 
 julia:
-  - 1.0
   - 1
 
 os:
   - linux
-  - osx
 
 notifications:
   email:
