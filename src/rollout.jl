@@ -139,7 +139,7 @@ end
 end
 
 function simulate(sim::RolloutSimulator, mdp::MDP, policy::Policy)
-    istate = initialstate(mdp, sim.rng)
+    istate = rand(sim.rng, initialstate(mdp))
     simulate(sim, mdp, policy, istate)
 end
 
