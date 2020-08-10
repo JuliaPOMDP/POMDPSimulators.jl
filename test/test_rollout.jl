@@ -30,9 +30,9 @@ let
     end
 
     problem = LegacyGridWorld()
-    solver = RandomSolver(rng=Random.MersenneTwister(1))
+    solver = RandomSolver(rng=Random.MersenneTwister(2))
     policy = solve(solver, problem)
-    sim = RolloutSimulator(Random.MersenneTwister(1), 10) # new constructor
+    sim = RolloutSimulator(Random.MersenneTwister(2), 10) # new constructor
     if VERSION >= v"1.2"
         r2 = @inferred simulate(sim, problem, policy, initialstate(problem, sim.rng))
     else

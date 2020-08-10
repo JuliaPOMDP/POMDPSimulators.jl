@@ -49,13 +49,13 @@ end
 end
 
 @POMDP_require simulate(sim::HistoryRecorder, pomdp::POMDP, policy::Policy, bu::Updater) begin
-    @req initialstate_distribution(::typeof(pomdp))
-    dist = initialstate_distribution(pomdp)
+    @req initialstate(::typeof(pomdp))
+    dist = initialstate(pomdp)
     @subreq simulate(sim, pomdp, policy, bu, dist)
 end
 
 function simulate(sim::HistoryRecorder, pomdp::POMDP, policy::Policy, bu::Updater=updater(policy))
-    dist = initialstate_distribution(pomdp)
+    dist = initialstate(pomdp)
     return simulate(sim, pomdp, policy, bu, dist)
 end
 
@@ -116,7 +116,7 @@ function simulate(sim::HistoryRecorder,
 end
 
 @POMDP_require simulate(sim::HistoryRecorder, mdp::MDP, policy::Policy) begin
-    init_state = initialstate(mdp, sim.rng)
+    init_state = rand(sim.rng, initialstate(mdp))
     @subreq simulate(sim, mdp, policy, init_state)
 end
 
@@ -132,7 +132,7 @@ end
 
 function simulate(sim::HistoryRecorder,
                   mdp::MDP{S,A}, policy::Policy,
-                  init_state::S=initialstate(mdp, sim.rng)) where {S,A}
+                  init_state::S=rand(sim.rng, initialstate(mdp))) where {S,A}
     
     max_steps = something(sim.max_steps, typemax(Int))
     if sim.eps != nothing
