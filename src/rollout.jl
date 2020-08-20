@@ -76,7 +76,7 @@ end
     @req initialize_belief(::typeof(updater), ::typeof(initial_belief))
     @req isterminal(::P, ::S)
     @req discount(::P)
-    @req gen(::DDNOut{(:sp,:o,:r)}, ::P, ::S, ::A, ::typeof(sim.rng))
+    @req gen(::P, ::S, ::A, ::typeof(sim.rng))
     b = initialize_belief(updater, initial_belief)
     @req action(::typeof(policy), ::typeof(b))
     @req update(::typeof(updater), ::typeof(b), ::A, ::O)
@@ -134,7 +134,7 @@ end
     A = actiontype(mdp)
     @req isterminal(::P, ::S)
     @req action(::typeof(policy), ::S)
-    @req gen(::DDNOut{(:sp,:r)}, ::P, ::S, ::A, ::typeof(sim.rng))
+    @req gen(::P, ::S, ::A, ::typeof(sim.rng))
     @req discount(::P)
 end
 
