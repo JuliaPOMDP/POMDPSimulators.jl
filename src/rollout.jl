@@ -47,13 +47,13 @@ end
 end
 
 @POMDP_require simulate(sim::RolloutSimulator, pomdp::POMDP, policy::Policy, bu::Updater) begin
-    @req initialstate_distribution(::typeof(pomdp))
-    dist = initialstate_distribution(pomdp)
+    @req initialstate(::typeof(pomdp))
+    dist = initialstate(pomdp)
     @subreq simulate(sim, pomdp, policy, bu, dist)
 end
 
 function simulate(sim::RolloutSimulator, pomdp::POMDP, policy::Policy, bu::Updater=updater(policy))
-    dist = initialstate_distribution(pomdp)
+    dist = initialstate(pomdp)
     return simulate(sim, pomdp, policy, bu, dist)
 end
 
