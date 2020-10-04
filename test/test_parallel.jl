@@ -74,14 +74,7 @@ let
 end
 
 @testset "Issue 39" begin
-    m = QuickMDP(
-        # states = 1:2,
-        # actions = 1:2,
-        # transition = (s, a) -> Deterministic(clamp(s+a, 1, 2)),
-        # reward = (s, a, sp) -> s,
-        initialstate = Deterministic(1)
-       )
-
+    m = QuickMDP(initialstate = Deterministic(1))
     sim = Sim(m, RandomPolicy(m))
     @test sim.initialstate == 1
 end
