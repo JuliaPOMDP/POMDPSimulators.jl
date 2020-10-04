@@ -45,7 +45,7 @@ Create a `Sim` object that represents a POMDP simulation.
 function Sim(pomdp::POMDP,
              policy::Policy,
              up=updater(policy),
-             initial_belief=initialstate_distribution(pomdp),
+             initial_belief=initialstate(pomdp),
              initialstate=nothing;
              rng::AbstractRNG=Random.GLOBAL_RNG,
              max_steps::Int=typemax(Int),
@@ -77,7 +77,7 @@ function Sim(mdp::MDP,
             )
 
     if initialstate == nothing && statetype(mdp) != Nothing
-        is = POMDPs.initialstate(mdp, rng)
+        is = rand(rng, POMDPs.initialstate(mdp))
     else
         is = initialstate
     end

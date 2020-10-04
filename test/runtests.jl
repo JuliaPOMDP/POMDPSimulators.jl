@@ -5,6 +5,8 @@ using BeliefUpdaters
 using Random
 using Test
 using POMDPSimulators
+using POMDPModelTools: Deterministic
+using QuickPOMDPs: QuickMDP
 import POMDPLinter
 
 @testset "rollout" begin

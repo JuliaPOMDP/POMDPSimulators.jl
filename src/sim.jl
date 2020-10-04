@@ -133,7 +133,7 @@ end
             error("""
                   Error in sim(::$(typeof(p))): No initial state specified.
                   
-                  Please supply it as a keyword argument or define the method POMDPs.initialstate(::$(typeof(p)), ::$(typeof(Random.GLOBAL_RNG))) or define the method POMDPs.initialstate_distribution(::$(typeof(p))).
+                  Please supply it as a keyword argument or provide POMDPs.initialstate(::$(typeof(p))).
 
                   """)
         end
