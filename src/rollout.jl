@@ -143,7 +143,7 @@ function simulate(sim::RolloutSimulator, mdp::MDP, policy::Policy)
     simulate(sim, mdp, policy, istate)
 end
 
-function simulate(sim::RolloutSimulator, mdp::Union{MDP{S}, POMDP{S}}, policy::Policy, initialstate::S) where {S}
+function simulate(sim::RolloutSimulator, mdp::MDP{S}, policy::Policy, initialstate::S) where {S}
     
     if sim.eps == nothing
         eps = 0.0
@@ -178,3 +178,9 @@ function simulate(sim::RolloutSimulator, mdp::Union{MDP{S}, POMDP{S}}, policy::P
 
     return r_total
 end
+
+function simulate(sim::RolloutSimulator, m::POMDP{S}, policy::Policy, initialstate::S) where {S}
+    simulate(sim, UnderlyingMDP(m), policy, initialstate)
+end
+
+simulate(sim::RolloutSimulator, m::MDP, p::Policy, is) = simulate(sim, m, p, convert(statetype(m), is))
