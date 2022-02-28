@@ -8,7 +8,7 @@ policy = RandomPolicy(pomdp)
 
 for (s, a, o, r) in stepthrough(pomdp, policy, "s,a,o,r", max_steps=10)
     println("in state $s")
-    println("took action $o")
+    println("took action $a")
     println("received observation $o and reward $r")
 end
 ```
